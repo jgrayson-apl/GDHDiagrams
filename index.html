@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0 maximum-scale=1.0"/>
+    <!-- ICON -->
+    <link rel="icon" href="./assets/favicon.ico" sizes="32x32" type="image/vnd.microsoft.icon">
+    <!-- TITLE -->
+    <title class="application-title">Geodesign Hub Diagrams</title>
+    
+    <!-- CALCITE -->
+    <script src="https://js.arcgis.com/calcite-components/1.0.0-beta.86/calcite.esm.js" type="module"></script>
+    <link href="https://js.arcgis.com/calcite-components/1.0.0-beta.86/calcite.css" rel="stylesheet"/>
+    
+    <!-- ArcGIS API for JavaScript-->
+    <link href="https://js.arcgis.com/4.24/@arcgis/core/assets/esri/themes/light/main.css" rel="stylesheet"/>
+    <script src="https://js.arcgis.com/4.24/"></script>
+    
+    <!-- APPLICATION -->
+    <link rel="stylesheet" type="text/css" href="./css/application.css">
+    <script type="module" src="./js/Application.js"></script>
+  </head>
+  <body class="calcite-theme-light">
+    
+    <calcite-shell dir="ltr">
+      
+      <header slot="header">
+        <h2 class="application-title">Geodesign Hub Diagrams</h2>
+        <div>
+          <span id="sign-in-user-label"></span>
+        </div>
+      </header>
+      
+      <!-- LEFT -->
+      <calcite-shell-panel slot="primary-panel" position="start" width-scale="m" collapsed="false">
+        <calcite-panel>
+          
+          <calcite-block heading="Portal Content" collapsible open>
+            <calcite-icon slot="icon" icon="map-contents"></calcite-icon>
+            
+            <calcite-block-section text="Groups" open>
+              <calcite-pick-list id="groups-list" selection-follows-focus>
+                <calcite-pick-list-item label="Global GeoDesign" description="Global GeoDesign Preview items" value="5a0eb4eacfe94da6800089441a7ea2b7">
+                  <calcite-action slot="actions-start" icon="group" scale="s" compact></calcite-action>
+                </calcite-pick-list-item>
+                <calcite-pick-list-item label="Socal Prototype" description="Socal Prototype Staging for Esri" value="9e4b9642677e4ee38a8aa72ab1691297">
+                  <calcite-action slot="actions-start" icon="group" scale="s" compact></calcite-action>
+                </calcite-pick-list-item>
+              </calcite-pick-list>
+            </calcite-block-section>
+            
+            <calcite-block-section text="Group Layers" open>
+              <calcite-pick-list id="group-layers-list" multiple="true" selection-follows-focus></calcite-pick-list>
+            </calcite-block-section>
+          
+          </calcite-block>
+          
+          <calcite-block heading="Map Layers" collapsible open>
+            <calcite-icon slot="icon" icon="layers"></calcite-icon>
+            <div id="layer-list-container"></div>
+          </calcite-block>
+  
+          <calcite-block heading="Map Legend" collapsible open>
+            <calcite-icon slot="icon" icon="legend"></calcite-icon>
+            <div id="legend-container"></div>
+          </calcite-block>
+        
+        </calcite-panel>
+      </calcite-shell-panel>
+      
+      <!-- CENTER -->
+      <div id="center-container">
+        <div id="view-container"></div>
+      </div>
+      
+      <!-- RIGHT -->
+      <calcite-shell-panel slot="contextual-panel" position="end" width-scale="m" collapsed="false">
+        <calcite-panel>
+  
+          <calcite-block heading="Source" summary="feature layer in map" open>
+            <calcite-icon slot="icon" icon="layer-polygon-service"></calcite-icon>
+            <calcite-input id="source-layer-input" type="text" icon="layer-polygon" read-only placeholder="source layer"></calcite-input>
+          </calcite-block>
+          
+          <calcite-block heading="Plans" summary="plans" collapsible open>
+            <calcite-icon slot="icon" icon="analysis"></calcite-icon>
+          </calcite-block>
+          
+          <calcite-block heading="Systems" summary="systems" collapsible open>
+            <calcite-icon slot="icon" icon="analysis"></calcite-icon>
+          </calcite-block>
+          
+          <calcite-block heading="Diagrams" summary="diagrams" collapsible open>
+            <calcite-icon slot="icon" icon="analysis"></calcite-icon>
+          </calcite-block>
+        
+        </calcite-panel>
+      
+      </calcite-shell-panel>
+      
+    </calcite-shell>
+  </body>
+</html>
