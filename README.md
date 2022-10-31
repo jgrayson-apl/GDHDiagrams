@@ -1,5 +1,6 @@
-# Application Template
-Simple application template that uses the ArcGIS API for JavaScript and Calcite Components.
+# Geodesign Hub Diagrams
+
+Simple app showing how to use the ArcGIS API for JavaScript to conect to discover group content and perform simple operations on Feature Layers.
 
  - [ArcGIS API for Javascript](https://developers.arcgis.com/javascript/latest/api-reference/)
  - [Calcite Components](https://developers.arcgis.com/calcite-design-system/components/)
