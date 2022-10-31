@@ -18,8 +18,7 @@ class Application extends EventTarget {
 
   static CONFIG = {
     PORTAL_URL: "https://www.arcgis.com",
-    OAUTH_APP_ID: "PZdAgiu187TroTCX",
-    IGC_GROUP_ID: ''
+    OAUTH_APP_ID: "PZdAgiu187TroTCX"
   };
 
   // GROUP IDS //
