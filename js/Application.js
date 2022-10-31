@@ -445,7 +445,9 @@ class Application extends EventTarget {
             // SELECTED FEATURES //
             const selectedFeatures = analysisFS.features;
 
+            //
             // DO SOMETHING WITH SELECTED FEATURES //
+            //
             view.popup.open({features: selectedFeatures});
 
           });
