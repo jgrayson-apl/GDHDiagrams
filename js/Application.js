@@ -401,9 +401,10 @@ class Application extends EventTarget {
           }
         }
       });
-      // SKETCH EXPAND //
-      const sketchExpand = new Expand({view, content: sketch});
-      view.ui.add(sketchExpand, {position: 'top-right', index: 0});
+      sketch.viewModel.set({
+
+        
+      });
 
       // WHEN A NEW SKETCH HAS BEEN CREATED //
       sketch.on("create", (event) => {
@@ -412,9 +413,10 @@ class Application extends EventTarget {
         }
       });
 
-      /*reactiveUtils.watch(() => !view.popup.visible, () => {
-        sketchLayer.removeAll();
-      });*/
+      // SKETCH EXPAND //
+      const sketchExpand = new Expand({view, content: sketch});
+      view.ui.add(sketchExpand, {position: 'top-right', index: 0});
+
 
     });
   }
