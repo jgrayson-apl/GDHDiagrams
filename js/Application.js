@@ -362,36 +362,39 @@ class Application extends EventTarget {
           }
 
         });
+      } else {
+        planList.replaceChildren();
+        _getPlanFeatures({});
       }
-
-      //
-      // GET ALL FEATURES FOR A PROJECT AND SCENARIO //
-      //
-      const _getPlanFeatures = ({projectID, scenarioID}) => {
-        if (analysisLayer) {
-
-          const analysisQuery = analysisLayer.createQuery();
-          analysisQuery.set({
-            where: `(Intervention_type IS NOT NULL) AND (Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ scenarioID }')`,
-            outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID', 'Intervention_type'],
-            returnGeometry: true
-          });
-
-          //
-          // *I THINK* THIS IS WHERE WE BREAK DOWN THE LIST OF FEATURES BY SYSTEM...
-          //
-          analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
-            console.info(analysisFS.features);
-
-            //
-            // TODO: ...WHAT NEXT HERE...
-            //
-
-          });
-        }
-      };
-
     };
+
+    //
+    // GET ALL FEATURES FOR A PROJECT AND SCENARIO //
+    //
+    const _getPlanFeatures = ({projectID, scenarioID} = {}) => {
+      if (analysisLayer && projectID && scenarioID) {
+
+        const analysisQuery = analysisLayer.createQuery();
+        analysisQuery.set({
+          where: `(Intervention_type IS NOT NULL) AND (Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ scenarioID }')`,
+          outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID', 'Intervention_type'],
+          returnGeometry: true
+        });
+
+        //
+        // *I THINK* THIS IS WHERE WE BREAK DOWN THE LIST OF FEATURES BY SYSTEM...
+        //
+        analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
+          console.info(analysisFS.features);
+
+          //
+          // TODO: ...WHAT NEXT HERE...
+          //
+
+        });
+      }
+    };
+
   }
 
 }
