@@ -448,37 +448,42 @@ class Application extends EventTarget {
         });
 
         analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
+          console.info(analysisFS.features);
 
-          console.info(analysisFS.features)
+
+          //
+          // BREAK DOWN AVAILABLE FEATURES
+          //
+
 
         });
       }
 
     };
 
-    this.addEventListener('analysis-geometry', ({detail: {geometry}}) => {
-      if (analysisLayer) {
-        view.whenLayerView(analysisLayer).then(analysisLayerView => {
+    /*this.addEventListener('analysis-geometry', ({detail: {geometry}}) => {
+     if (analysisLayer) {
+     view.whenLayerView(analysisLayer).then(analysisLayerView => {
 
-          const analysisQuery = analysisLayerView.createQuery();
-          analysisQuery.set({
-            where: `1=1`,
-            geometry
-          });
+     const analysisQuery = analysisLayerView.createQuery();
+     analysisQuery.set({
+     where: `1=1`,
+     geometry
+     });
 
-          analysisLayerView.queryFeatures(analysisQuery).then(analysisFS => {
-            // SELECTED FEATURES //
-            const selectedFeatures = analysisFS.features;
+     analysisLayerView.queryFeatures(analysisQuery).then(analysisFS => {
+     // SELECTED FEATURES //
+     const selectedFeatures = analysisFS.features;
 
-            //
-            // DO SOMETHING WITH SELECTED FEATURES //
-            //
-            view.popup.open({features: selectedFeatures});
+     //
+     // DO SOMETHING WITH SELECTED FEATURES //
+     //
+     view.popup.open({features: selectedFeatures});
 
-          });
-        });
-      }
-    });
+     });
+     });
+     }
+     });*/
 
   }
 
