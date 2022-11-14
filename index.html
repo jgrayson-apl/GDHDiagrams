@@ -35,31 +35,16 @@
       <calcite-shell-panel slot="primary-panel" position="start" width-scale="m" collapsed="false">
         <calcite-panel>
           
-          <calcite-block heading="Portal Content" collapsible open>
+          <calcite-block heading="GeoPlanner Scenario Layers" collapsible open>
             <calcite-icon slot="icon" icon="map-contents"></calcite-icon>
-            
-            <calcite-block-section text="Groups" open>
-              <calcite-pick-list id="groups-list" selection-follows-focus>
-                <calcite-pick-list-item label="Global GeoDesign" description="Global GeoDesign Preview items" value="5a0eb4eacfe94da6800089441a7ea2b7">
-                  <calcite-action slot="actions-start" icon="group" scale="s" compact></calcite-action>
-                </calcite-pick-list-item>
-                <calcite-pick-list-item label="Socal Prototype" description="Socal Prototype Staging for Esri" value="9e4b9642677e4ee38a8aa72ab1691297">
-                  <calcite-action slot="actions-start" icon="group" scale="s" compact></calcite-action>
-                </calcite-pick-list-item>
-              </calcite-pick-list>
-            </calcite-block-section>
-            
-            <calcite-block-section text="Group Layers" open>
-              <calcite-pick-list id="group-layers-list" multiple="true" selection-follows-focus></calcite-pick-list>
-            </calcite-block-section>
-          
+            <calcite-pick-list id="geoplanner-layers-list" multiple="true" selection-follows-focus></calcite-pick-list>
           </calcite-block>
           
           <calcite-block heading="Map Layers" collapsible open>
             <calcite-icon slot="icon" icon="layers"></calcite-icon>
             <div id="layer-list-container"></div>
           </calcite-block>
-  
+          
           <calcite-block heading="Map Legend" collapsible open>
             <calcite-icon slot="icon" icon="legend"></calcite-icon>
             <div id="legend-container"></div>
@@ -76,7 +61,7 @@
       <!-- RIGHT -->
       <calcite-shell-panel slot="contextual-panel" position="end" width-scale="m" collapsed="false">
         <calcite-panel>
-  
+          
           <calcite-block heading="Analysis Source" summary="feature layer in map" open>
             <calcite-icon slot="icon" icon="layer-polygon-service"></calcite-icon>
             <calcite-input id="source-layer-input" placeholder="source layer" type="text" icon="layer-polygon" read-only></calcite-input>
@@ -97,7 +82,7 @@
         </calcite-panel>
       
       </calcite-shell-panel>
-      
+    
     </calcite-shell>
   </body>
 </html>

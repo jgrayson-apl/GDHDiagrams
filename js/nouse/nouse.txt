@@ -1,0 +1,53 @@
+/**
+   *
+   * @param {PortalGroup} portalGroup
+   */
+  initializeGroupLayers({portalGroup}) {
+
+    // FIND GROUP LAYERS //
+    const groupLayersList = document.getElementById('group-layers-list');
+    if (portalGroup) {
+
+      // ASK PORTAL GROUP TO RETURN PORTAL ITEMS //
+      portalGroup.queryItems().then(({results}) => {
+
+        // LAYER PORTAL ITEMS //
+        const layerPortalItems = results.filter(item => item.isLayer);
+
+        // LAYER LIST ITEMS //
+        const layerListItems = layerPortalItems.map(this.createLayerListItem.bind(this));
+
+        // ADD LAYER LIST ITEMS //
+        groupLayersList.replaceChildren(...layerListItems);
+      });
+
+    } else {
+      groupLayersList.replaceChildren();
+    }
+  }
+
+   /**
+     *
+     * @param {Portal} portal
+     */
+    /*initializeGroupSelection({portal}) {
+
+      // FIND GROUP //
+      const groupsList = document.getElementById('groups-list');
+      groupsList.addEventListener('calciteListChange', ({detail}) => {
+        // GROUP ID //
+        const groupId = detail.keys().next().value;
+
+        // ASK PORTAL TO FIND GROUP //
+        portal.queryGroups({query: `id: ${ groupId }`}).then(({results}) => {
+
+          // CLEAR MAP LAYERS //
+          this.dispatchEvent(new CustomEvent('layers-clear', {detail: {}}));
+
+          // LIST THE GROUP LAYERS //
+          this.initializeGroupLayers({portalGroup: results[0]});
+
+        });
+      });
+
+    }*/

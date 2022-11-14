@@ -21,12 +21,6 @@ class Application extends EventTarget {
     OAUTH_APP_ID: "PZdAgiu187TroTCX"
   };
 
-  // GROUP IDS //
-  // static IGC_GROUP_IDS = [
-  //   '5a0eb4eacfe94da6800089441a7ea2b7',  // Global GeoDesign Preview items
-  //   '9e4b9642677e4ee38a8aa72ab1691297' // Socal Prototype Staging for Esri
-  // ];
-
   /**
    *
    */
@@ -41,7 +35,7 @@ class Application extends EventTarget {
       signInUserLabel.innerHTML = portal.user?.username || '[ not signed in ]';
 
       // INITIALIZE GROUP CONTENT SELECTION //
-      this.initializeGroupSelection({portal});
+      //this.initializeGroupSelection({portal});
 
       // INITIALIZE MAP VIEW //
       this.initializeMapView().then(({view}) => {
@@ -54,6 +48,9 @@ class Application extends EventTarget {
 
         // INITIALIZE ANALYSIS //
         this.initializeAnalysis({view});
+
+        // GEOPLANNER LAYERS //
+        this.initializeGeoPlannerLayers({portal});
 
       });
     });
@@ -158,6 +155,20 @@ class Application extends EventTarget {
           // LEGEND //
           const legend = new Legend({container: 'legend-container', view});
 
+          const fullExtentAction = {
+            id: "full-extent",
+            type: 'button',
+            title: "Go to full extent",
+            className: "esri-icon-zoom-out-fixed"
+          };
+
+          const blendModeAction = {
+            id: "blend-mode",
+            type: 'toggle',
+            value: false,
+            title: "Blend Mode: multiply"
+          };
+
           // LAYER LIST //
           const layerList = new LayerList({
             container: 'layer-list-container',
@@ -173,6 +184,13 @@ class Application extends EventTarget {
                 item.layer.opacity = event.value;
               });
 
+              const itemActions = [
+                {...blendModeAction, value: (item.layer.blendMode === 'multiply')}
+              ];
+              if (item.layer.type !== 'group') {
+                itemActions.push(fullExtentAction);
+              }
+
               item.set({
                 open: true,
                 actionsOpen: true,
@@ -182,22 +200,7 @@ class Application extends EventTarget {
                   className: "esri-icon-experimental",
                   content: slider
                 },
-                actionsSections: [
-                  [
-                    {
-                      id: "full-extent",
-                      type: 'button',
-                      title: "Go to full extent",
-                      className: "esri-icon-zoom-out-fixed"
-                    },
-                    {
-                      id: "blend-mode",
-                      type: 'toggle',
-                      value: (item.layer.blendMode === 'multiply'),
-                      title: "Blend Mode: multiply"
-                    }
-                  ]
-                ]
+                actionsSections: [itemActions]
               });
             }
           });
@@ -205,7 +208,7 @@ class Application extends EventTarget {
           layerList.on("trigger-action", (evt) => {
             const id = evt.action.id;
             if (id === "full-extent") {
-              view.goTo(evt.item.layer.fullExtent);
+              view.goTo(evt.item.layer.fullExtent.clone().expand(1.1));
             }
             if (id === "blend-mode") {
               evt.item.layer.blendMode = evt.action.value ? 'multiply' : 'normal';
@@ -232,6 +235,33 @@ class Application extends EventTarget {
       // LIST OF LAYERS BY PORTAL ITEM ID //
       const layerByPortalItemID = new Map();
 
+      //
+      // HERE WE ASSUME THAT THE GEOPLANNER SCENARIO LAYER HAS TWO LAYERS
+      // SO THE HYDRATED LAYER IS A GROUP LAYER WITH TWO FEATURE LAYERS
+      //
+      // NOTE: THIS LOGIC WILL CHANGE AS WE ADAPT TO AN AGREED UPON
+      //       CONFIGURATION OF LAYERS AND SCHEMAS...
+      //
+      const _setAnalysisSource = (layer) => {
+        if (layer?.layers) {
+
+          const interventionsLayer = layer.layers.find(l => l.title.toLowerCase().includes('interventions'));
+
+          sourceLayerInput.value = interventionsLayer.title;
+          this.setAnalysisLayer({layer: interventionsLayer});
+
+        } else {
+          sourceLayerInput.value = null;
+          this.setAnalysisLayer({layer: null});
+        }
+
+        /*if (layer.type === 'feature') {
+         sourceLayerInput.value = portalItem.title;
+         this.setAnalysisLayer({layer});
+         }*/
+
+      };
+
       // TOGGLE LAYER INCLUSION IN MAP //
       this.addEventListener('layer-toggle', ({detail: {portalItem, selected}}) => {
         // DO WE HAVE THE LAYER CACHED? //
@@ -245,34 +275,30 @@ class Application extends EventTarget {
             // THEN JUST ADD TO THE MAP //
             view.map.add(layer, 0);
 
-            if (layer.type === 'feature') {
-              sourceLayerInput.value = portalItem.title;
-              this.setAnalysisLayer({layer});
-            }
+            _setAnalysisSource(layer);
 
           } else {
             // THEN CREATE DIRECTLY FROM PORTAL ITEM //
             Layer.fromPortalItem(portalItem).then((mapLayer) => {
+
               // CACHE LAYER SO WE DON'T HAVE TO CREATE IT AGAIN IN THIS SESSION //
               layerByPortalItemID.set(portalItem.id, mapLayer);
-              // ADD LAYER TO MAP //
-              view.map.add(mapLayer, 0);
 
-              if (mapLayer.type === 'feature') {
-                sourceLayerInput.value = portalItem.title;
-                this.setAnalysisLayer({layer: mapLayer});
-              }
+              mapLayer.loadAll().then(() => {
 
+                // ADD LAYER TO MAP //
+                view.map.add(mapLayer, 0);
+
+                _setAnalysisSource(mapLayer);
+
+              });
             });
           }
 
         } else {
           // THE MAP LAYER SHOULD ALREADY BE CACHED SO REMOVE IT FROM THE MAP //
           layer && view.map.remove(layer);
-          if (layer?.title === sourceLayerInput.value) {
-            sourceLayerInput.value = null;
-            this.setAnalysisLayer({layer: null});
-          }
+          _setAnalysisSource();
         }
       });
 
@@ -290,56 +316,47 @@ class Application extends EventTarget {
 
   /**
    *
-   * @param {Portal} portal
+   * @param {MapView} view
    */
-  initializeGroupSelection({portal}) {
+  initializeSketchTools({view}) {
+    require([
+      'esri/core/reactiveUtils',
+      'esri/layers/GraphicsLayer',
+      "esri/widgets/Expand",
+      'esri/widgets/Sketch'
+    ], (reactiveUtils, GraphicsLayer, Expand, Sketch) => {
 
-    // FIND GROUP //
-    const groupsList = document.getElementById('groups-list');
-    groupsList.addEventListener('calciteListChange', ({detail}) => {
-      // GROUP ID //
-      const groupId = detail.keys().next().value;
+      // SKETCH LAYER //
+      const sketchLayer = new GraphicsLayer({listMode: 'hide'});
+      view.map.add(sketchLayer);
 
-      // ASK PORTAL TO FIND GROUP //
-      portal.queryGroups({query: `id: ${ groupId }`}).then(({results}) => {
-
-        // CLEAR MAP LAYERS //
-        this.dispatchEvent(new CustomEvent('layers-clear', {detail: {}}));
-
-        // LIST THE GROUP LAYERS //
-        this.initializeGroupLayers({portalGroup: results[0]});
-
+      // SKETCH //
+      const sketch = new Sketch({
+        view,
+        layer: sketchLayer,
+        creationMode: 'single',
+        availableCreateTools: ['polygon', 'rectangle', 'circle'],
+        defaultCreateOptions: {mode: 'hybrid'},
+        visibleElements: {
+          selectionTools: {
+            "rectangle-selection": false,
+            "lasso-selection": false
+          }
+        }
       });
+
+      // WHEN A NEW SKETCH HAS BEEN CREATED //
+      sketch.on("create", (event) => {
+        if (event.state === "complete") {
+          this.dispatchEvent(new CustomEvent('analysis-geometry', {detail: {geometry: event.graphic.geometry}}));
+        }
+      });
+
+      // SKETCH EXPAND //
+      const sketchExpand = new Expand({view, content: sketch});
+      view.ui.add(sketchExpand, {position: 'top-right', index: 0});
+
     });
-
-  }
-
-  /**
-   *
-   * @param {PortalGroup} portalGroup
-   */
-  initializeGroupLayers({portalGroup}) {
-
-    // FIND GROUP LAYERS //
-    const groupLayersList = document.getElementById('group-layers-list');
-    if (portalGroup) {
-
-      // ASK PORTAL GROUP TO RETURN PORTAL ITEMS //
-      portalGroup.queryItems().then(({results}) => {
-
-        // LAYER PORTAL ITEMS //
-        const layerPortalItems = results.filter(item => item.isLayer);
-
-        // LAYER LIST ITEMS //
-        const layerListItems = layerPortalItems.map(this.createLayerListItem.bind(this));
-
-        // ADD LAYER LIST ITEMS //
-        groupLayersList.replaceChildren(...layerListItems);
-      });
-
-    } else {
-      groupLayersList.replaceChildren();
-    }
   }
 
   /**
@@ -373,52 +390,38 @@ class Application extends EventTarget {
 
   /**
    *
-   * @param {MapView} view
+   * @param portal
    */
-  initializeSketchTools({view}) {
-    require([
-      'esri/core/reactiveUtils',
-      'esri/layers/GraphicsLayer',
-      "esri/widgets/Expand",
-      'esri/widgets/Sketch'
-    ], (reactiveUtils, GraphicsLayer, Expand, Sketch) => {
+  initializeGeoPlannerLayers({portal}) {
 
-      // SKETCH LAYER //
-      const sketchLayer = new GraphicsLayer({listMode: 'hide'});
-      view.map.add(sketchLayer);
+    const geoPlannerLayersList = document.getElementById('geoplanner-layers-list');
 
-      // SKETCH //
-      const sketch = new Sketch({
-        view,
-        layer: sketchLayer,
-        creationMode: 'single',
-        availableCreateTools: ['polygon', 'rectangle', 'circle'],
-        defaultCreateOptions: {mode: 'hybrid'},
-        visibleElements: {
-          selectionTools: {
-            "rectangle-selection": false,
-            "lasso-selection": false
-          }
-        }
-      });
-      sketch.viewModel.set({
+    if (portal) {
 
-        
+      //
+      // ASK PORTAL TO RETURN PORTAL ITEMS      //
+      //  - IGC | geodesign | geodesignScenario //
+      //
+      portal.queryItems({
+        query: 'tags:(IGC AND geodesign AND geodesignScenario)',
+        sortField: 'modified',
+        sortOrder: 'desc',
+        num: 100
+      }).then(({results}) => {
+
+        // LAYER PORTAL ITEMS //
+        const layerPortalItems = results.filter(item => item.isLayer);
+
+        // LAYER LIST ITEMS //
+        const layerListItems = layerPortalItems.map(this.createLayerListItem.bind(this));
+
+        // ADD LAYER LIST ITEMS //
+        geoPlannerLayersList.replaceChildren(...layerListItems);
       });
 
-      // WHEN A NEW SKETCH HAS BEEN CREATED //
-      sketch.on("create", (event) => {
-        if (event.state === "complete") {
-          this.dispatchEvent(new CustomEvent('analysis-geometry', {detail: {geometry: event.graphic.geometry}}));
-        }
-      });
-
-      // SKETCH EXPAND //
-      const sketchExpand = new Expand({view, content: sketch});
-      view.ui.add(sketchExpand, {position: 'top-right', index: 0});
-
-
-    });
+    } else {
+      geoPlannerLayersList.replaceChildren();
+    }
   }
 
   /**
@@ -430,6 +433,27 @@ class Application extends EventTarget {
     let analysisLayer = null;
     this.setAnalysisLayer = ({layer}) => {
       analysisLayer = layer;
+      _getInterventions();
+    };
+
+    const _getInterventions = () => {
+      if (analysisLayer) {
+
+        const analysisQuery = analysisLayer.createQuery();
+        analysisQuery.set({
+          where: `Intervention_type IS NOT NULL`,
+          outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID', 'Intervention_type'],
+          returnDistinctValues: true,
+          returnGeometry: false
+        });
+
+        analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
+
+          console.info(analysisFS.features)
+
+        });
+      }
+
     };
 
     this.addEventListener('analysis-geometry', ({detail: {geometry}}) => {
