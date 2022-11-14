@@ -81,7 +81,7 @@ class Application extends EventTarget {
         esriId.checkSignInStatus(portalSharingURL).then(() => {
           return esriId.getCredential(portalSharingURL);
         }).catch(() => {
-          // IF USER IS NOT SIGNED IN THEN ASK THE USER TO SIGN IN NOW... //
+          // IF USER IS NOT ALREADY SIGNED-IN IN THE BROWSER THEN ASK THE USER TO SIGN IN NOW... //
           portal.authMode = 'immediate';
         }).then(() => {
           // LOAD PORTAL //
@@ -343,7 +343,7 @@ class Application extends EventTarget {
 
             const planListItem = document.createElement('calcite-pick-list-item');
             planListItem.setAttribute('value', scenarioID);
-            planListItem.setAttribute('label', `ID: ${ scenarioID }`);
+            planListItem.setAttribute('label', `Scenario: ${ scenarioID }`);
             planListItem.setAttribute('description', `Project: ${ projectID }`);
 
             planListItem.addEventListener('calciteListItemChange', ({detail: {selected}}) => {
