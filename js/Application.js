@@ -137,83 +137,8 @@ class Application extends EventTarget {
         view.when(() => {
           // WHEN THE VIEW IS CREATED //
 
-          // SEARCH //
-          // const search = new Search({view});
-          // const searchExpand = new Expand({view, content: search});
-          // view.ui.add(searchExpand, {position: 'top-left', index: 0});
-
-          // HOME //
-          // const home = new Home({view});
-          // view.ui.add(home, {position: 'top-left', index: 1});
-
           // LEGEND //
           const legend = new Legend({container: 'legend-container', view});
-
-          /*
-           const fullExtentAction = {
-           id: "full-extent",
-           type: 'button',
-           title: "Go to full extent",
-           className: "esri-icon-zoom-out-fixed"
-           };
-           */
-
-          /*
-           const blendModeAction = {
-           id: "blend-mode",
-           type: 'toggle',
-           value: false,
-           title: "Blend Mode: multiply"
-           };
-           */
-
-          // LAYER LIST //
-          /*
-           const layerList = new LayerList({
-           container: 'layer-list-container',
-           view: view,
-           visibleElements: {statusIndicators: true},
-           listItemCreatedFunction: ({item}) => {
-
-           const slider = new Slider({
-           min: 0, max: 1, precision: 2, values: [item.layer.opacity],
-           visibleElements: {labels: false, rangeLabels: true}
-           });
-           slider.on("thumb-drag", (event) => {
-           item.layer.opacity = event.value;
-           });
-
-           const itemActions = [
-           {...blendModeAction, value: (item.layer.blendMode === 'multiply')}
-           ];
-           if (item.layer.type !== 'group') {
-           itemActions.push(fullExtentAction);
-           }
-
-           item.set({
-           open: true,
-           actionsOpen: true,
-           panel: {
-           open: true,
-           title: 'opacity',
-           className: "esri-icon-experimental",
-           content: slider
-           },
-           actionsSections: [itemActions]
-           });
-           }
-           });
-           */
-
-          /*layerList.on("trigger-action", (evt) => {
-           const id = evt.action.id;
-           if (id === "full-extent") {
-           view.goTo(evt.item.layer.fullExtent.clone().expand(1.1));
-           }
-           if (id === "blend-mode") {
-           evt.item.layer.blendMode = evt.action.value ? 'multiply' : 'normal';
-           }
-           });*/
 
           resolve({view});
         });
@@ -245,13 +170,20 @@ class Application extends EventTarget {
       const _setAnalysisSource = (layer) => {
         if (layer?.layers) {
 
-          const interventionsLayer = layer.layers.find(l => l.title.toLowerCase().includes('interventions'));
+          layer.loadAll().then(() => {
 
-          view.goTo({target: interventionsLayer.fullExtent.clone().expand(1.1)}).then(() => {
+            // INTERVENTIONS LAYER //
+            const interventionsLayer = layer.layers.find(l => l.title.toLowerCase().includes('interventions'));
 
-            sourceLayerInput.value = interventionsLayer.title;
-            this.setAnalysisLayer({layer: interventionsLayer});
+            // GO TO INTERVENTIONS LAYER //
+            view.goTo({target: interventionsLayer.fullExtent.clone().expand(1.1)}).then(() => {
+              // ADD LAYER TO MAP //
+              view.map.add(layer, 0);
 
+              sourceLayerInput.value = interventionsLayer.title;
+              this.setAnalysisLayer({layer: interventionsLayer});
+
+            });
           });
 
         } else {
@@ -271,26 +203,14 @@ class Application extends EventTarget {
 
           // DO WE ALREADY HAVE THE LAYER CACHED? //
           if (layer) {
-            // THEN JUST ADD TO THE MAP //
-            view.map.add(layer, 0);
-
             _setAnalysisSource(layer);
 
           } else {
             // THEN CREATE DIRECTLY FROM PORTAL ITEM //
             Layer.fromPortalItem(portalItem).then((mapLayer) => {
-
               // CACHE LAYER SO WE DON'T HAVE TO CREATE IT AGAIN IN THIS SESSION //
               layerByPortalItemID.set(portalItem.id, mapLayer);
-
-              mapLayer.loadAll().then(() => {
-
-                // ADD LAYER TO MAP //
-                view.map.add(mapLayer, 0);
-
-                _setAnalysisSource(mapLayer);
-
-              });
+              _setAnalysisSource(mapLayer);
             });
           }
 
@@ -371,6 +291,14 @@ class Application extends EventTarget {
 
         // ADD LAYER LIST ITEMS //
         geoPlannerLayersList.replaceChildren(...layerListItems);
+
+        // SELECT ONLY FEATURE LAYER ITEM FOUND //
+        if (layerListItems.length === 1) {
+          layerListItems[0].toggleAttribute('selected', true);
+        } else {
+          console.warn('More than one GeoPlanner Scenario layer item found...');
+        }
+
       });
 
     } else {
@@ -396,12 +324,12 @@ class Application extends EventTarget {
       if (analysisLayer) {
 
         //
-        // GET UNIQUE LIST OF PLANS ( = GEOPLANNER SCENARIONS)
+        // GET UNIQUE LIST OF PLANS (GEOPLANNER SCENARIONS)
         // LIMIT TO FEATURES THAT HAVE AN INTERVENTION //
         //
         const analysisQuery = analysisLayer.createQuery();
         analysisQuery.set({
-          where: `(Intervention_type IS NOT NULL)`,
+          where: '1=1', //`(Intervention_type IS NOT NULL)`,
           outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID'],
           returnDistinctValues: true,
           returnGeometry: false
@@ -425,6 +353,13 @@ class Application extends EventTarget {
             return planListItem;
           });
           planList.replaceChildren(...planListItems);
+
+          // SELECT ONLY PLAN FOUND //
+          if (planListItems.length === 1) {
+            planListItems[0].toggleAttribute('selected', true);
+          } else {
+            console.warn('More than one GeoPlanner Scenario features found...');
+          }
 
         });
       }
@@ -457,31 +392,6 @@ class Application extends EventTarget {
       };
 
     };
-
-    /*this.addEventListener('analysis-geometry', ({detail: {geometry}}) => {
-     if (analysisLayer) {
-     view.whenLayerView(analysisLayer).then(analysisLayerView => {
-
-     const analysisQuery = analysisLayerView.createQuery();
-     analysisQuery.set({
-     where: `1=1`,
-     geometry
-     });
-
-     analysisLayerView.queryFeatures(analysisQuery).then(analysisFS => {
-     // SELECTED FEATURES //
-     const selectedFeatures = analysisFS.features;
-
-     //
-     // DO SOMETHING WITH SELECTED FEATURES //
-     //
-     view.popup.open({features: selectedFeatures});
-
-     });
-     });
-     }
-     });*/
-
   }
 
 }

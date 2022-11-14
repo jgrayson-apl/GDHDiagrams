@@ -97,3 +97,103 @@
 
     });
   }
+
+
+ /*this.addEventListener('analysis-geometry', ({detail: {geometry}}) => {
+     if (analysisLayer) {
+     view.whenLayerView(analysisLayer).then(analysisLayerView => {
+
+     const analysisQuery = analysisLayerView.createQuery();
+     analysisQuery.set({
+     where: `1=1`,
+     geometry
+     });
+
+     analysisLayerView.queryFeatures(analysisQuery).then(analysisFS => {
+     // SELECTED FEATURES //
+     const selectedFeatures = analysisFS.features;
+
+     //
+     // DO SOMETHING WITH SELECTED FEATURES //
+     //
+     view.popup.open({features: selectedFeatures});
+
+     });
+     });
+     }
+     });*/
+
+// SEARCH //
+          // const search = new Search({view});
+          // const searchExpand = new Expand({view, content: search});
+          // view.ui.add(searchExpand, {position: 'top-left', index: 0});
+
+          // HOME //
+          // const home = new Home({view});
+          // view.ui.add(home, {position: 'top-left', index: 1});
+
+          /*
+           const fullExtentAction = {
+           id: "full-extent",
+           type: 'button',
+           title: "Go to full extent",
+           className: "esri-icon-zoom-out-fixed"
+           };
+           */
+
+          /*
+           const blendModeAction = {
+           id: "blend-mode",
+           type: 'toggle',
+           value: false,
+           title: "Blend Mode: multiply"
+           };
+           */
+
+          // LAYER LIST //
+          /*
+           const layerList = new LayerList({
+           container: 'layer-list-container',
+           view: view,
+           visibleElements: {statusIndicators: true},
+           listItemCreatedFunction: ({item}) => {
+
+           const slider = new Slider({
+           min: 0, max: 1, precision: 2, values: [item.layer.opacity],
+           visibleElements: {labels: false, rangeLabels: true}
+           });
+           slider.on("thumb-drag", (event) => {
+           item.layer.opacity = event.value;
+           });
+
+           const itemActions = [
+           {...blendModeAction, value: (item.layer.blendMode === 'multiply')}
+           ];
+           if (item.layer.type !== 'group') {
+           itemActions.push(fullExtentAction);
+           }
+
+           item.set({
+           open: true,
+           actionsOpen: true,
+           panel: {
+           open: true,
+           title: 'opacity',
+           className: "esri-icon-experimental",
+           content: slider
+           },
+           actionsSections: [itemActions]
+           });
+           }
+           });
+           */
+
+          /*layerList.on("trigger-action", (evt) => {
+           const id = evt.action.id;
+           if (id === "full-extent") {
+           view.goTo(evt.item.layer.fullExtent.clone().expand(1.1));
+           }
+           if (id === "blend-mode") {
+           evt.item.layer.blendMode = evt.action.value ? 'multiply' : 'normal';
+           }
+           });*/
