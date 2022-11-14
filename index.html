@@ -40,10 +40,10 @@
             <calcite-pick-list id="geoplanner-layers-list" multiple="true" selection-follows-focus></calcite-pick-list>
           </calcite-block>
           
-          <calcite-block heading="Map Layers" collapsible open>
+          <!--<calcite-block heading="Map Layers" collapsible open>
             <calcite-icon slot="icon" icon="layers"></calcite-icon>
             <div id="layer-list-container"></div>
-          </calcite-block>
+          </calcite-block>-->
           
           <calcite-block heading="Map Legend" collapsible open>
             <calcite-icon slot="icon" icon="legend"></calcite-icon>
@@ -67,16 +67,19 @@
             <calcite-input id="source-layer-input" placeholder="source layer" type="text" icon="layer-polygon" read-only></calcite-input>
           </calcite-block>
           
-          <calcite-block heading="Plans" summary="plans" collapsible open>
+          <calcite-block heading="Plan" summary="GeoPlanner Scenario" collapsible open>
             <calcite-icon slot="icon" icon="collection"></calcite-icon>
+            <calcite-pick-list id="plan-list" selection-follows-focus></calcite-pick-list>
           </calcite-block>
           
-          <calcite-block heading="Systems" summary="systems" collapsible open>
+          <calcite-block heading="Systems" summary="????" collapsible open>
             <calcite-icon slot="icon" icon="basemap"></calcite-icon>
+            <calcite-pick-list id="systems-list" selection-follows-focus></calcite-pick-list>
           </calcite-block>
           
-          <calcite-block heading="Diagrams" summary="diagrams" collapsible open>
+          <calcite-block heading="Diagrams" summary="????" collapsible open>
             <calcite-icon slot="icon" icon="classify-objects"></calcite-icon>
+            <div id="diagrams-list"></div>
           </calcite-block>
         
         </calcite-panel>

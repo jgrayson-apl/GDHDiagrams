@@ -51,3 +51,49 @@
       });
 
     }*/
+
+
+/**
+   *
+   * @param {MapView} view
+   */
+  initializeSketchTools({view}) {
+    require([
+      'esri/core/reactiveUtils',
+      'esri/layers/GraphicsLayer',
+      "esri/widgets/Expand",
+      'esri/widgets/Sketch'
+    ], (reactiveUtils, GraphicsLayer, Expand, Sketch) => {
+
+      // SKETCH LAYER //
+      const sketchLayer = new GraphicsLayer({listMode: 'hide'});
+      view.map.add(sketchLayer);
+
+      // SKETCH //
+      const sketch = new Sketch({
+        view,
+        layer: sketchLayer,
+        creationMode: 'single',
+        availableCreateTools: ['polygon', 'rectangle', 'circle'],
+        defaultCreateOptions: {mode: 'hybrid'},
+        visibleElements: {
+          selectionTools: {
+            "rectangle-selection": false,
+            "lasso-selection": false
+          }
+        }
+      });
+
+      // WHEN A NEW SKETCH HAS BEEN CREATED //
+      sketch.on("create", (event) => {
+        if (event.state === "complete") {
+          this.dispatchEvent(new CustomEvent('analysis-geometry', {detail: {geometry: event.graphic.geometry}}));
+        }
+      });
+
+      // SKETCH EXPAND //
+      const sketchExpand = new Expand({view, content: sketch});
+      view.ui.add(sketchExpand, {position: 'top-right', index: 0});
+
+    });
+  }

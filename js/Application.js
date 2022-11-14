@@ -34,17 +34,11 @@ class Application extends EventTarget {
       const signInUserLabel = document.getElementById('sign-in-user-label');
       signInUserLabel.innerHTML = portal.user?.username || '[ not signed in ]';
 
-      // INITIALIZE GROUP CONTENT SELECTION //
-      //this.initializeGroupSelection({portal});
-
       // INITIALIZE MAP VIEW //
       this.initializeMapView().then(({view}) => {
 
         // INITIALIZE MANAGEMENT OF MAP LAYERS //
         this.initializeMapLayers({view});
-
-        // INITIALIZE SKETCH TOOLS //
-        this.initializeSketchTools({view});
 
         // INITIALIZE ANALYSIS //
         this.initializeAnalysis({view});
@@ -144,76 +138,82 @@ class Application extends EventTarget {
           // WHEN THE VIEW IS CREATED //
 
           // SEARCH //
-          const search = new Search({view});
-          const searchExpand = new Expand({view, content: search});
-          view.ui.add(searchExpand, {position: 'top-left', index: 0});
+          // const search = new Search({view});
+          // const searchExpand = new Expand({view, content: search});
+          // view.ui.add(searchExpand, {position: 'top-left', index: 0});
 
           // HOME //
-          const home = new Home({view});
-          view.ui.add(home, {position: 'top-left', index: 1});
+          // const home = new Home({view});
+          // view.ui.add(home, {position: 'top-left', index: 1});
 
           // LEGEND //
           const legend = new Legend({container: 'legend-container', view});
 
-          const fullExtentAction = {
-            id: "full-extent",
-            type: 'button',
-            title: "Go to full extent",
-            className: "esri-icon-zoom-out-fixed"
-          };
+          /*
+           const fullExtentAction = {
+           id: "full-extent",
+           type: 'button',
+           title: "Go to full extent",
+           className: "esri-icon-zoom-out-fixed"
+           };
+           */
 
-          const blendModeAction = {
-            id: "blend-mode",
-            type: 'toggle',
-            value: false,
-            title: "Blend Mode: multiply"
-          };
+          /*
+           const blendModeAction = {
+           id: "blend-mode",
+           type: 'toggle',
+           value: false,
+           title: "Blend Mode: multiply"
+           };
+           */
 
           // LAYER LIST //
-          const layerList = new LayerList({
-            container: 'layer-list-container',
-            view: view,
-            visibleElements: {statusIndicators: true},
-            listItemCreatedFunction: ({item}) => {
+          /*
+           const layerList = new LayerList({
+           container: 'layer-list-container',
+           view: view,
+           visibleElements: {statusIndicators: true},
+           listItemCreatedFunction: ({item}) => {
 
-              const slider = new Slider({
-                min: 0, max: 1, precision: 2, values: [item.layer.opacity],
-                visibleElements: {labels: false, rangeLabels: true}
-              });
-              slider.on("thumb-drag", (event) => {
-                item.layer.opacity = event.value;
-              });
+           const slider = new Slider({
+           min: 0, max: 1, precision: 2, values: [item.layer.opacity],
+           visibleElements: {labels: false, rangeLabels: true}
+           });
+           slider.on("thumb-drag", (event) => {
+           item.layer.opacity = event.value;
+           });
 
-              const itemActions = [
-                {...blendModeAction, value: (item.layer.blendMode === 'multiply')}
-              ];
-              if (item.layer.type !== 'group') {
-                itemActions.push(fullExtentAction);
-              }
+           const itemActions = [
+           {...blendModeAction, value: (item.layer.blendMode === 'multiply')}
+           ];
+           if (item.layer.type !== 'group') {
+           itemActions.push(fullExtentAction);
+           }
 
-              item.set({
-                open: true,
-                actionsOpen: true,
-                panel: {
-                  open: true,
-                  title: 'opacity',
-                  className: "esri-icon-experimental",
-                  content: slider
-                },
-                actionsSections: [itemActions]
-              });
-            }
-          });
+           item.set({
+           open: true,
+           actionsOpen: true,
+           panel: {
+           open: true,
+           title: 'opacity',
+           className: "esri-icon-experimental",
+           content: slider
+           },
+           actionsSections: [itemActions]
+           });
+           }
+           });
+           */
 
-          layerList.on("trigger-action", (evt) => {
-            const id = evt.action.id;
-            if (id === "full-extent") {
-              view.goTo(evt.item.layer.fullExtent.clone().expand(1.1));
-            }
-            if (id === "blend-mode") {
-              evt.item.layer.blendMode = evt.action.value ? 'multiply' : 'normal';
-            }
-          });
+          /*layerList.on("trigger-action", (evt) => {
+           const id = evt.action.id;
+           if (id === "full-extent") {
+           view.goTo(evt.item.layer.fullExtent.clone().expand(1.1));
+           }
+           if (id === "blend-mode") {
+           evt.item.layer.blendMode = evt.action.value ? 'multiply' : 'normal';
+           }
+           });*/
 
           resolve({view});
         });
@@ -247,18 +247,17 @@ class Application extends EventTarget {
 
           const interventionsLayer = layer.layers.find(l => l.title.toLowerCase().includes('interventions'));
 
-          sourceLayerInput.value = interventionsLayer.title;
-          this.setAnalysisLayer({layer: interventionsLayer});
+          view.goTo({target: interventionsLayer.fullExtent.clone().expand(1.1)}).then(() => {
+
+            sourceLayerInput.value = interventionsLayer.title;
+            this.setAnalysisLayer({layer: interventionsLayer});
+
+          });
 
         } else {
           sourceLayerInput.value = null;
           this.setAnalysisLayer({layer: null});
         }
-
-        /*if (layer.type === 'feature') {
-         sourceLayerInput.value = portalItem.title;
-         this.setAnalysisLayer({layer});
-         }*/
 
       };
 
@@ -310,51 +309,6 @@ class Application extends EventTarget {
         sourceLayerInput.value = null;
         this.setAnalysisLayer({layer: null});
       });
-
-    });
-  }
-
-  /**
-   *
-   * @param {MapView} view
-   */
-  initializeSketchTools({view}) {
-    require([
-      'esri/core/reactiveUtils',
-      'esri/layers/GraphicsLayer',
-      "esri/widgets/Expand",
-      'esri/widgets/Sketch'
-    ], (reactiveUtils, GraphicsLayer, Expand, Sketch) => {
-
-      // SKETCH LAYER //
-      const sketchLayer = new GraphicsLayer({listMode: 'hide'});
-      view.map.add(sketchLayer);
-
-      // SKETCH //
-      const sketch = new Sketch({
-        view,
-        layer: sketchLayer,
-        creationMode: 'single',
-        availableCreateTools: ['polygon', 'rectangle', 'circle'],
-        defaultCreateOptions: {mode: 'hybrid'},
-        visibleElements: {
-          selectionTools: {
-            "rectangle-selection": false,
-            "lasso-selection": false
-          }
-        }
-      });
-
-      // WHEN A NEW SKETCH HAS BEEN CREATED //
-      sketch.on("create", (event) => {
-        if (event.state === "complete") {
-          this.dispatchEvent(new CustomEvent('analysis-geometry', {detail: {geometry: event.graphic.geometry}}));
-        }
-      });
-
-      // SKETCH EXPAND //
-      const sketchExpand = new Expand({view, content: sketch});
-      view.ui.add(sketchExpand, {position: 'top-right', index: 0});
 
     });
   }
@@ -430,6 +384,8 @@ class Application extends EventTarget {
    */
   initializeAnalysis({view}) {
 
+    const planList = document.getElementById('plan-list');
+
     let analysisLayer = null;
     this.setAnalysisLayer = ({layer}) => {
       analysisLayer = layer;
@@ -439,25 +395,66 @@ class Application extends EventTarget {
     const _getInterventions = () => {
       if (analysisLayer) {
 
+        //
+        // GET UNIQUE LIST OF PLANS ( = GEOPLANNER SCENARIONS)
+        // LIMIT TO FEATURES THAT HAVE AN INTERVENTION //
+        //
         const analysisQuery = analysisLayer.createQuery();
         analysisQuery.set({
-          where: `Intervention_type IS NOT NULL`,
-          outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID', 'Intervention_type'],
+          where: `(Intervention_type IS NOT NULL)`,
+          outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID'],
           returnDistinctValues: true,
           returnGeometry: false
         });
-
         analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
-          console.info(analysisFS.features);
+          //console.info(analysisFS.features);
 
+          const planListItems = analysisFS.features.map(feature => {
+            const projectID = feature.attributes.Geodesign_ProjectID;
+            const scenarioID = feature.attributes.Geodesign_ScenarioID;
 
-          //
-          // BREAK DOWN AVAILABLE FEATURES
-          //
+            const planListItem = document.createElement('calcite-pick-list-item');
+            planListItem.setAttribute('value', scenarioID);
+            planListItem.setAttribute('label', `ID: ${ scenarioID }`);
+            planListItem.setAttribute('description', `Project: ${ projectID }`);
 
+            planListItem.addEventListener('calciteListItemChange', ({detail: {selected}}) => {
+              selected && _getPlanFeatures({projectID, scenarioID});
+            });
+
+            return planListItem;
+          });
+          planList.replaceChildren(...planListItems);
 
         });
       }
+
+      //
+      // GET ALL FEATURES FOR A PROJECT AND SCENARIO //
+      //
+      const _getPlanFeatures = ({projectID, scenarioID}) => {
+        if (analysisLayer) {
+
+          const analysisQuery = analysisLayer.createQuery();
+          analysisQuery.set({
+            where: `(Intervention_type IS NOT NULL) AND (Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ scenarioID }')`,
+            outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID', 'Intervention_type'],
+            returnGeometry: true
+          });
+
+          //
+          // *I THINK* THIS IS WHERE WE BREAK DOWN THE LIST OF FEATURES BY SYSTEM...
+          //
+          analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
+            console.info(analysisFS.features);
+
+            //
+            // TODO: ...WHAT NEXT HERE...
+            //
+
+          });
+        }
+      };
 
     };
 
