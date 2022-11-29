@@ -244,7 +244,7 @@ class Application extends EventTarget {
     layerListItem.setAttribute('value', layerPortalItem.id);
     layerListItem.setAttribute('label', layerPortalItem.title);
     layerListItem.setAttribute('description', `Type: ${ layerPortalItem.displayName } | Source: ${ layerPortalItem.type }`);
-    layerListItem.setAttribute('title', layerPortalItem.snippet);
+    layerListItem.setAttribute('title', [layerPortalItem.id, layerPortalItem.owner, layerPortalItem.snippet].join('\n'));
 
     const layerAction = document.createElement('calcite-action');
     layerAction.setAttribute('slot', 'actions-start');
@@ -277,7 +277,7 @@ class Application extends EventTarget {
       //  - IGC | geodesign | geodesignScenario //
       //
       portal.queryItems({
-        query: 'tags:(IGC AND geodesign AND geodesignScenario)',
+        query: 'tags:(IGC AND geodesign AND geodesignScenario) AND owner:csmith_IGCollab',
         sortField: 'modified',
         sortOrder: 'desc',
         num: 100
@@ -320,16 +320,21 @@ class Application extends EventTarget {
       _getInterventions();
     };
 
+    /**
+     *
+     * NOTE: WE CAN SKIP THIS COMPLETELY AND ASSUME THE PORTAL ITEM ONLY HAS ONE SCENARIO/PLAN
+     *
+     * @private
+     */
     const _getInterventions = () => {
       if (analysisLayer) {
 
         //
         // GET UNIQUE LIST OF PLANS (GEOPLANNER SCENARIONS)
-        // LIMIT TO FEATURES THAT HAVE AN INTERVENTION //
+        //  - createQuery() WILL USE THE LAYER DEFINITION EXPRESSION WHICH PROVIDES A SCENARIO SPECIFIC FILTER
         //
         const analysisQuery = analysisLayer.createQuery();
         analysisQuery.set({
-          where: '1=1', //`(Intervention_type IS NOT NULL)`,
           outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID'],
           returnDistinctValues: true,
           returnGeometry: false
@@ -368,16 +373,22 @@ class Application extends EventTarget {
       }
     };
 
+    const diagramsList = document.getElementById('diagrams-list');
+
     //
     // GET ALL FEATURES FOR A PROJECT AND SCENARIO //
     //
     const _getPlanFeatures = ({projectID, scenarioID} = {}) => {
       if (analysisLayer && projectID && scenarioID) {
 
+        //
+        //  - createQuery() WILL USE THE LAYER DEFINITION EXPRESSION WHICH PROVIDES A SCENARIO SPECIFIC FILTER
+        //
         const analysisQuery = analysisLayer.createQuery();
         analysisQuery.set({
-          where: `(Intervention_type IS NOT NULL) AND (Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ scenarioID }')`,
-          outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID', 'Intervention_type'],
+          where: `${ analysisQuery.where } AND (Intervention_System <> 'NA')`,
+          //outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID', 'Intervention_System', 'Intervention_Type'],
+          outFields: ['*'],
           returnGeometry: true
         });
 
@@ -385,11 +396,36 @@ class Application extends EventTarget {
         // *I THINK* THIS IS WHERE WE BREAK DOWN THE LIST OF FEATURES BY SYSTEM...
         //
         analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
-          console.info(analysisFS.features);
+          //console.info(analysisFS.features);
 
-          //
-          // TODO: ...WHAT NEXT HERE...
-          //
+          const planFeatures = analysisFS.features;
+
+          planFeatures.map(diagramFeature => {
+
+            const planInfo = {
+              'objectid': diagramFeature.getObjectId(),
+              'project': diagramFeature.attributes['Geodesign_ProjectID'],
+              'scenario_plan': diagramFeature.attributes['Geodesign_ScenarioID'],
+              'intervention_system': diagramFeature.attributes['Intervention_System'],
+              'intervention_type': diagramFeature.attributes['Intervention_Type']
+            };
+
+            let listGroup = diagramsList.querySelector(`calcite-pick-list-group[group-title="${ planInfo.intervention_system }"]`);
+            if (!listGroup) {
+              listGroup = document.createElement('calcite-pick-list-group');
+              listGroup.setAttribute('group-title', planInfo.intervention_system);
+              diagramsList.append(listGroup);
+            }
+
+            const diagramItem = document.createElement('calcite-pick-list-item');
+            diagramItem.setAttribute('label', planInfo.intervention_type);
+            diagramItem.setAttribute('title', JSON.stringify(planInfo, null, 2));
+            diagramItem.addEventListener('click', () => {
+              console.info('Diagram: ', diagramFeature.attributes);
+            });
+            listGroup.append(diagramItem);
+
+          });
 
         });
       }
