@@ -34,8 +34,7 @@ class DiagramReader extends EventTarget {
       const signInUserLabel = document.getElementById('sign-in-user-label');
       signInUserLabel.innerHTML = portal.user?.username || '[ not signed in ]';
 
-      // FIND ALL IGC GEOPLANNER LAYERS //
-      // AND SELECT THE FIRST ONE //
+      // FIND ALL IGC GEOPLANNER LAYERS AND SELECT THE FIRST ONE //
       this.initializeGeoPlannerLayers({portal});
 
     });
@@ -136,13 +135,18 @@ class DiagramReader extends EventTarget {
 
             return layerItemNode;
           });
-          // ADD LAYERS TO LIST  //
+          // DISPLAY LIST OF ALL GEOPLANNER LAYER ITEMS //
           geoplannerItemsList.replaceChildren(...layerItemNodes);
 
 
           // SELECT FIRST FEATURE LAYER ITEM FOUND //
           const firstLayerPortalItem = layerPortalItems[0];
+
+          // GET THE LAYER FROM THE PORTAL ITEM //
           Layer.fromPortalItem(firstLayerPortalItem).then((layer) => {
+            // THE GEOPLANNER LAYER ITEM REFERENCES A LAYER WITH MULTIPLE SUBLAYERS
+            // SO WE GET BACK A GROUP LAYER WITH TWO FEATURE LAYERS
+            // SO WE THEN MAKE SURE ALL SUB LAYERS ARE LOADED...
             layer.loadAll().then(() => {
 
               // INTERVENTIONS LAYER //
@@ -155,7 +159,7 @@ class DiagramReader extends EventTarget {
 
               // DISPLAY FILTER USED OF THE GEOPLANNER DESIGN LAYER //
               // - THIS WILL SHOW THE DEFAULT QUERY USED FOR THIS LAYER
-              // - THAT SHOW THE ID OF THE PROJECT AND DESIGN
+              // - AND SHOWS THE ID OF THE GEOPLANNER PROJECT AND DESIGN
               geoplannerItemDetails.innerHTML = interventionsLayer.definitionExpression;
 
               //
@@ -180,8 +184,10 @@ class DiagramReader extends EventTarget {
                 //
                 const diagramBySystems = new Map();
 
+                // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
                 const diagramItems = analysisFS.features.map(diagramFeature => {
 
+                  // THIS PROVIDES A SIMPLE OBJECT TO HOLD RELEVANT FEATURE/DIAGRAM PROPERTIES //
                   const planInfo = {
                     'objectid': diagramFeature.getObjectId(),
                     'project': diagramFeature.attributes['Geodesign_ProjectID'],
@@ -190,21 +196,23 @@ class DiagramReader extends EventTarget {
                     'intervention_type': diagramFeature.attributes['Intervention_Type']
                   };
 
+                  // FEATURE/DIAGRAM ITEM //
                   const diagramItem = document.createElement('div');
                   diagramItem.classList.add('diagram-item');
                   diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
 
+                  // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
                   getDiagramColor({plansLayer: interventionsLayer, diagramFeature}).then(({color}) => {
                     diagramItem.style.borderLeftColor = color.toCss();
                   });
 
-                  const diagramBySystem = diagramBySystems.get(planInfo.scenario_plan) || [];
+                  // ORGANIZE FEATURES/DIAGRAMS BY SYSTEM //
+                  const diagramBySystem = diagramBySystems.get(planInfo.intervention_system) || [];
                   diagramBySystem.push(diagramFeature);
-                  diagramBySystems.set(planInfo.scenario_plan, diagramBySystem);
+                  diagramBySystems.set(planInfo.intervention_system, diagramBySystem);
 
                   return diagramItem;
                 });
-
                 // ADD DIAGRAMS TO LIST //
                 gdhDiagramsList.replaceChildren(...diagramItems);
 
