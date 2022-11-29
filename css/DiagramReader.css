@@ -16,10 +16,12 @@
 }
 
 .layer-item {
+  margin: 2px;
   padding: 2px;
 }
 
 .diagram-item {
+  margin: 2px;
   padding: 2px;
-  border-left: solid 6px transparent;
+  border-left: solid 1.5rem transparent;
 }

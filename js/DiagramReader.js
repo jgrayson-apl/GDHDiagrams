@@ -194,7 +194,7 @@ class DiagramReader extends EventTarget {
                   diagramItem.classList.add('diagram-item');
                   diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
 
-                  getDiagramColor({diagramFeature}).then(({color}) => {
+                  getDiagramColor({plansLayer: interventionsLayer, diagramFeature}).then(({color}) => {
                     diagramItem.style.borderLeftColor = color.toCss();
                   });
 
