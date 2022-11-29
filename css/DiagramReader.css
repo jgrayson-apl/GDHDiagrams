@@ -1,0 +1,25 @@
+
+.pane {
+  margin: 5px;
+  padding: 10px;
+  border: solid 1px #cccccc;
+}
+
+.pane-section {
+  margin: 5px;
+  padding: 10px;
+  background-color: #efefef;
+}
+
+.pane-label {
+  font-weight: 600;
+}
+
+.layer-item {
+  padding: 2px;
+}
+
+.diagram-item {
+  padding: 2px;
+  border-left: solid 6px transparent;
+}

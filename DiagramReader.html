@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0 maximum-scale=1.0"/>
+    <link rel="icon" href="./assets/favicon.ico" sizes="32x32" type="image/vnd.microsoft.icon">
+    <title>Geodesign Hub Diagrams</title>
+    
+    <!-- ArcGIS API for JavaScript-->
+    <link href="https://js.arcgis.com/4.25/@arcgis/core/assets/esri/themes/light/main.css" rel="stylesheet"/>
+    <script src="https://js.arcgis.com/4.25/"></script>
+    
+    <!-- APPLICATION -->
+    <link rel="stylesheet" type="text/css" href="css/DiagramReader.css">
+    <script type="module" src="js/DiagramReader.js"></script>
+  </head>
+  <body>
+    
+    <div class="pane">
+      <h3>Geodesign Hub & GeoPlanner - Diagrams Reader</h3>
+      <div>
+        <span class="pane-label">Singed-in User:</span> <span id="sign-in-user-label"></span>
+      </div>
+    </div>
+  
+    <div class="pane">
+      <div>
+        <span class="pane-label">GeoPlanner Design Items</span>
+      </div>
+      <div id="geoplanner-items-list" class="pane-section"></div>
+    </div>
+    
+    <div class="pane">
+      <div>
+        <span class="pane-label">GeoPlanner Design First Item:</span> <span id="geoplanner-item-label"></span>
+      </div>
+      <div id="geoplanner-item-details" class="pane-section"></div>
+    </div>
+    
+  
+    <div class="pane">
+      <div>
+        <span class="pane-label">GeoPlanner Design Features / Geodesign Hub Diagrams</span>
+      </div>
+      <div id="gdh-diagrams-list" class="pane-section"></div>
+    </div>
+    
+  </body>
+</html>
