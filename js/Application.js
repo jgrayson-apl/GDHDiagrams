@@ -243,8 +243,8 @@ class Application extends EventTarget {
     const layerListItem = document.createElement('calcite-pick-list-item');
     layerListItem.setAttribute('value', layerPortalItem.id);
     layerListItem.setAttribute('label', layerPortalItem.title);
-    layerListItem.setAttribute('description', `Type: ${ layerPortalItem.displayName } | Source: ${ layerPortalItem.type }`);
-    layerListItem.setAttribute('title', [layerPortalItem.id, layerPortalItem.owner, layerPortalItem.snippet].join('\n'));
+    layerListItem.setAttribute('description', `[ ${layerPortalItem.owner} ] ${ layerPortalItem.displayName } (${ layerPortalItem.type })`);
+    layerListItem.setAttribute('title', [layerPortalItem.id, layerPortalItem.snippet].join('\n'));
 
     const layerAction = document.createElement('calcite-action');
     layerAction.setAttribute('slot', 'actions-start');
@@ -277,7 +277,7 @@ class Application extends EventTarget {
       //  - IGC | geodesign | geodesignScenario //
       //
       portal.queryItems({
-        query: 'tags:(IGC AND geodesign AND geodesignScenario) AND owner:csmith_IGCollab',
+        query: 'tags:(IGC AND geodesign AND geodesignScenario) AND owner:csmith_IGCollab',  // AND owner:csmith_IGCollab
         sortField: 'modified',
         sortOrder: 'desc',
         num: 100
@@ -373,6 +373,16 @@ class Application extends EventTarget {
       }
     };
 
+    const getDiagramColor = ({diagramFeature}) => {
+      return new Promise((resolve, reject) => {
+        require(["esri/symbols/support/symbolUtils"], (symbolUtils) => {
+          symbolUtils.getDisplayedColor(diagramFeature, {renderer: analysisLayer.renderer}).then((color) => {
+            resolve({color});
+          });
+        });
+      });
+    };
+
     const diagramsList = document.getElementById('diagrams-list');
 
     //
@@ -387,7 +397,6 @@ class Application extends EventTarget {
         const analysisQuery = analysisLayer.createQuery();
         analysisQuery.set({
           where: `${ analysisQuery.where } AND (Intervention_System <> 'NA')`,
-          //outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID', 'Intervention_System', 'Intervention_Type'],
           outFields: ['*'],
           returnGeometry: true
         });
@@ -418,12 +427,17 @@ class Application extends EventTarget {
             }
 
             const diagramItem = document.createElement('calcite-pick-list-item');
+            diagramItem.setAttribute('value', planInfo.objectid);
             diagramItem.setAttribute('label', planInfo.intervention_type);
             diagramItem.setAttribute('title', JSON.stringify(planInfo, null, 2));
             diagramItem.addEventListener('click', () => {
               console.info('Diagram: ', diagramFeature.attributes);
             });
             listGroup.append(diagramItem);
+
+            getDiagramColor({diagramFeature}).then(({color}) => {
+              diagramItem.style.borderLeft = `solid 6px ${ color.toCss() }`;
+            });
 
           });
 
