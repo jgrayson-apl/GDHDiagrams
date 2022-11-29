@@ -106,7 +106,6 @@ class DiagramReader extends EventTarget {
       const geoplannerItemsList = document.getElementById('geoplanner-items-list');
       const geoplannerItemLabel = document.getElementById('geoplanner-item-label');
       const geoplannerItemDetails = document.getElementById('geoplanner-item-details');
-
       const gdhDiagramsList = document.getElementById('gdh-diagrams-list');
 
       if (portal) {
@@ -168,7 +167,7 @@ class DiagramReader extends EventTarget {
               //
               const analysisQuery = interventionsLayer.createQuery();
               analysisQuery.set({
-                where: `${ analysisQuery.where } AND (Intervention_System <> 'NA')`,
+                where: `${ analysisQuery.where } AND (Intervention_System <> 'NA')`,  // TODO: REPLACE 'NA' WITH NULL VALUES?
                 outFields: ['*'],
                 returnGeometry: true
               });
@@ -227,137 +226,6 @@ class DiagramReader extends EventTarget {
       }
 
     });
-  }
-
-  /**
-   *
-   * @param {MapView} view
-   */
-  initializeAnalysis({view}) {
-
-    const planList = document.getElementById('plan-list');
-
-    let analysisLayer = null;
-    this.setAnalysisLayer = ({layer}) => {
-      analysisLayer = layer;
-      _getInterventions();
-    };
-
-    /**
-     *
-     * NOTE: WE CAN SKIP THIS COMPLETELY AND ASSUME THE PORTAL ITEM ONLY HAS ONE SCENARIO/PLAN
-     *
-     * @private
-     */
-    const _getInterventions = () => {
-      if (analysisLayer) {
-
-        //
-        // GET UNIQUE LIST OF PLANS (GEOPLANNER SCENARIONS)
-        //  - createQuery() WILL USE THE LAYER DEFINITION EXPRESSION WHICH PROVIDES A SCENARIO SPECIFIC FILTER
-        //
-        const analysisQuery = analysisLayer.createQuery();
-        analysisQuery.set({
-          outFields: ['Geodesign_ProjectID', 'Geodesign_ScenarioID'],
-          returnDistinctValues: true,
-          returnGeometry: false
-        });
-        analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
-          //console.info(analysisFS.features);
-
-          const planListItems = analysisFS.features.map(feature => {
-            const projectID = feature.attributes.Geodesign_ProjectID;
-            const scenarioID = feature.attributes.Geodesign_ScenarioID;
-
-            const planListItem = document.createElement('calcite-pick-list-item');
-            planListItem.setAttribute('value', scenarioID);
-            planListItem.setAttribute('label', `Scenario: ${ scenarioID }`);
-            planListItem.setAttribute('description', `Project: ${ projectID }`);
-
-            planListItem.addEventListener('calciteListItemChange', ({detail: {selected}}) => {
-              selected && _getPlanFeatures({projectID, scenarioID});
-            });
-
-            return planListItem;
-          });
-          planList.replaceChildren(...planListItems);
-
-          // SELECT ONLY PLAN FOUND //
-          if (planListItems.length === 1) {
-            planListItems[0].toggleAttribute('selected', true);
-          } else {
-            console.warn('More than one GeoPlanner Scenario features found...');
-          }
-
-        });
-      } else {
-        planList.replaceChildren();
-        _getPlanFeatures({});
-      }
-    };
-
-    const diagramsList = document.getElementById('diagrams-list');
-
-    //
-    // GET ALL FEATURES FOR A PROJECT AND SCENARIO //
-    //
-    const _getPlanFeatures = ({projectID, scenarioID} = {}) => {
-      if (analysisLayer && projectID && scenarioID) {
-
-        //
-        //  - createQuery() WILL USE THE LAYER DEFINITION EXPRESSION WHICH PROVIDES A SCENARIO SPECIFIC FILTER
-        //
-        const analysisQuery = analysisLayer.createQuery();
-        analysisQuery.set({
-          where: `${ analysisQuery.where } AND (Intervention_System <> 'NA')`,
-          outFields: ['*'],
-          returnGeometry: true
-        });
-
-        //
-        // *I THINK* THIS IS WHERE WE BREAK DOWN THE LIST OF FEATURES BY SYSTEM...
-        //
-        analysisLayer.queryFeatures(analysisQuery).then(analysisFS => {
-          //console.info(analysisFS.features);
-
-          const planFeatures = analysisFS.features;
-
-          planFeatures.map(diagramFeature => {
-
-            const planInfo = {
-              'objectid': diagramFeature.getObjectId(),
-              'project': diagramFeature.attributes['Geodesign_ProjectID'],
-              'scenario_plan': diagramFeature.attributes['Geodesign_ScenarioID'],
-              'intervention_system': diagramFeature.attributes['Intervention_System'],
-              'intervention_type': diagramFeature.attributes['Intervention_Type']
-            };
-
-            let listGroup = diagramsList.querySelector(`calcite-pick-list-group[group-title="${ planInfo.intervention_system }"]`);
-            if (!listGroup) {
-              listGroup = document.createElement('calcite-pick-list-group');
-              listGroup.setAttribute('group-title', planInfo.intervention_system);
-              diagramsList.append(listGroup);
-            }
-
-            const diagramItem = document.createElement('calcite-pick-list-item');
-            diagramItem.setAttribute('value', planInfo.objectid);
-            diagramItem.setAttribute('label', planInfo.intervention_type);
-            diagramItem.setAttribute('title', JSON.stringify(planInfo, null, 2));
-            diagramItem.addEventListener('click', () => {
-              console.info('Diagram: ', diagramFeature.attributes);
-            });
-            listGroup.append(diagramItem);
-
-            getDiagramColor({diagramFeature}).then(({color}) => {
-              diagramItem.style.borderLeft = `solid 6px ${ color.toCss() }`;
-            });
-
-          });
-
-        });
-      }
-    };
-
   }
 
 }
