@@ -215,6 +215,9 @@ class DiagramReader extends EventTarget {
                 // ADD DIAGRAMS TO LIST //
                 gdhDiagramsList.replaceChildren(...diagramItems);
 
+                //
+                // THIS IS THE ORGANIZED LIST OF DIAGRAMS BY SYSTEM //
+                //
                 console.info(diagramBySystems);
               });
             });
