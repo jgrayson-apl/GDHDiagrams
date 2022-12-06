@@ -15,8 +15,9 @@
 .pane .toggle {
   cursor: pointer;
   position: absolute;
-  display: inline-block;
   text-align: center;
+  font-weight: bold;
+  font-size: larger;
   top: 5px;
   right: 5px;
   width: 1.5rem;
@@ -26,11 +27,11 @@
 }
 
 .pane .toggle:before {
-  content: '-';
+  content: '+';
 }
 
 .pane.collapsed .toggle:before {
-  content: '+';
+  content: '-';
 }
 
 .pane .toggle:hover {
