@@ -42,6 +42,8 @@
   position: relative;
   margin: 5px;
   padding: 10px;
+  max-height: 400px;
+  overflow: auto;
   background-color: #efefef;
 }
 
