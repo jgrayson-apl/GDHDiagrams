@@ -37,6 +37,13 @@ class DiagramReader extends EventTarget {
       // FIND ALL IGC GEOPLANNER LAYERS AND SELECT THE FIRST ONE //
       this.initializeGeoPlannerLayers({portal});
 
+      // TOGGLE PANE SECTIONS //
+      document.querySelectorAll('.pane').forEach(paneNode => {
+        paneNode.querySelector('.toggle')?.addEventListener('click', () => {
+          paneNode.classList.toggle('collapsed');
+        });
+      });
+
     });
 
   }
@@ -98,9 +105,9 @@ class DiagramReader extends EventTarget {
       'esri/symbols/support/symbolUtils'
     ], (esriConfig, esriRequest, Layer, symbolUtils) => {
 
-      const getDiagramColor = ({plansLayer, diagramFeature}) => {
+      const getDiagramColor = ({plansLayer, diagramAttributes}) => {
         return new Promise((resolve, reject) => {
-          symbolUtils.getDisplayedColor(diagramFeature, {renderer: plansLayer.renderer}).then((color) => {
+          symbolUtils.getDisplayedColor({attributes: diagramAttributes}, {renderer: plansLayer.renderer}).then((color) => {
             resolve({color});
           });
         });
@@ -170,6 +177,7 @@ class DiagramReader extends EventTarget {
               const analysisQuery = interventionsLayer.createQuery();
 
               // DIAGRAMS FILTER //
+              //  - IN ADDITION TO THE DEFAULT FILTER ALSO IGNORE ANY FEATURE WITHOUT AN INTERVENTION //
               const diagramsFilter = `${ analysisQuery.where } AND (Intervention_System <> 'NA')`;  // TODO: REPLACE 'NA' WITH NULL VALUES?
 
               // SET ANALYSIS QUERY PARAMETERS //
@@ -183,7 +191,7 @@ class DiagramReader extends EventTarget {
               // BREAK DOWN THE LIST OF FEATURES BY SYSTEM TO PRODUCE A LIST OF DIAGRAMS
               //
               interventionsLayer.queryFeatures(analysisQuery).then(analysisFS => {
-                //console.info(analysisFS.features);
+                console.info("Esri JSON features via queryFeatures(): ", analysisFS);
 
                 //
                 // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
@@ -193,22 +201,26 @@ class DiagramReader extends EventTarget {
                 // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
                 const diagramItems = analysisFS.features.map(diagramFeature => {
 
+                  // DIAGRAM ATTRIBUTES //
+                  const diagramAttributes = diagramFeature.attributes;
+
                   // THIS PROVIDES A SIMPLE OBJECT TO HOLD RELEVANT FEATURE/DIAGRAM PROPERTIES //
                   const planInfo = {
-                    'objectid': diagramFeature.getObjectId(),
-                    'project': diagramFeature.attributes['Geodesign_ProjectID'],
-                    'scenario_plan': diagramFeature.attributes['Geodesign_ScenarioID'],
-                    'intervention_system': diagramFeature.attributes['Intervention_System'],
-                    'intervention_type': diagramFeature.attributes['Intervention_Type']
+                    'objectid': diagramAttributes['OBJECTID'],
+                    'project': diagramAttributes['Geodesign_ProjectID'],
+                    'scenario_plan': diagramAttributes['Geodesign_ScenarioID'],
+                    'intervention_system': diagramAttributes['Intervention_System'],
+                    'intervention_type': diagramAttributes['Intervention_Type']
                   };
 
                   // FEATURE/DIAGRAM ITEM //
                   const diagramItem = document.createElement('div');
                   diagramItem.classList.add('diagram-item');
                   diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
+                  diagramItem.title = JSON.stringify(diagramFeature, null, 2);
 
                   // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
-                  getDiagramColor({plansLayer: interventionsLayer, diagramFeature}).then(({color}) => {
+                  getDiagramColor({plansLayer: interventionsLayer, diagramAttributes: diagramAttributes}).then(({color}) => {
                     diagramItem.style.borderLeftColor = color.toCss();
                   });
 
@@ -225,50 +237,55 @@ class DiagramReader extends EventTarget {
                 //
                 // THIS IS THE ORGANIZED LIST OF DIAGRAMS BY SYSTEM //
                 //
-                console.info(diagramBySystems);
+                console.info("Diagrams by System as Esri JSON: ", diagramBySystems);
 
               });
 
               //
-              // GET GEOJSON //
+              // GET THE SAME FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
               //
               const directQueryUrl = `${ interventionsLayer.url }/${ interventionsLayer.layerId }/query`;
               esriRequest(directQueryUrl, {
                 query: {
-                  where: analysisQuery.where,
+                  where: diagramsFilter,
                   outFields: '*',
                   f: 'geojson'
                 },
                 responseType: "json"
               }).then((response) => {
                 const data = response.data;
-                console.info("GeoJSON via esriRequest(): ", data);
+                console.info("GeoJSON features via esriRequest(): ", data);
 
                 //
                 // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
                 //
                 const diagramBySystemsGeoJSON = new Map();
 
+                // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
                 const diagramItems = data.features.map(diagramFeature => {
+
+                  // DIAGRAM PROPERTIES //
+                  const diagramProperties = diagramFeature.properties;
 
                   // THIS PROVIDES A SIMPLE OBJECT TO HOLD RELEVANT FEATURE/DIAGRAM PROPERTIES //
                   const planInfo = {
-                    'objectid': diagramFeature.properties['OBJECTID'],
-                    'project': diagramFeature.properties['Geodesign_ProjectID'],
-                    'scenario_plan': diagramFeature.properties['Geodesign_ScenarioID'],
-                    'intervention_system': diagramFeature.properties['Intervention_System'],
-                    'intervention_type': diagramFeature.properties['Intervention_Type']
+                    'objectid': diagramProperties['OBJECTID'],
+                    'project': diagramProperties['Geodesign_ProjectID'],
+                    'scenario_plan': diagramProperties['Geodesign_ScenarioID'],
+                    'intervention_system': diagramProperties['Intervention_System'],
+                    'intervention_type': diagramProperties['Intervention_Type']
                   };
 
                   // FEATURE/DIAGRAM ITEM //
                   const diagramItem = document.createElement('div');
                   diagramItem.classList.add('diagram-item');
                   diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
+                  diagramItem.title = JSON.stringify(diagramFeature, null, 2);
 
                   // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
-                  // getDiagramColor({plansLayer: interventionsLayer, diagramFeature}).then(({color}) => {
-                  //   diagramItem.style.borderLeftColor = color.toCss();
-                  // });
+                  getDiagramColor({plansLayer: interventionsLayer, diagramAttributes: diagramProperties}).then(({color}) => {
+                    diagramItem.style.borderLeftColor = color.toCss();
+                  });
 
                   // ORGANIZE FEATURES/DIAGRAMS BY SYSTEM //
                   const diagramBySystem = diagramBySystemsGeoJSON.get(planInfo.intervention_system) || [];
@@ -283,7 +300,7 @@ class DiagramReader extends EventTarget {
                 //
                 // THIS IS THE ORGANIZED LIST OF DIAGRAMS BY SYSTEM //
                 //
-                console.info(diagramBySystemsGeoJSON);
+                console.info("Diagrams by System as GeoJSON: ", diagramBySystemsGeoJSON);
 
               });
 

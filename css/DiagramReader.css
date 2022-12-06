@@ -4,11 +4,12 @@
   margin: 5px;
   padding: 10px;
   border: solid 1px #cccccc;
+  overflow: hidden;
 }
 
 
-.pane.collapsed {
-  height: 0;
+.pane.collapsed > .pane-section {
+  display: none;
 }
 
 .pane .toggle {
@@ -28,7 +29,7 @@
   content: '-';
 }
 
-.pane.collapsed .toggle:after {
+.pane.collapsed .toggle:before {
   content: '+';
 }
 
