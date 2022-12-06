@@ -62,6 +62,7 @@ class DiagramReader extends EventTarget {
         esriId.registerOAuthInfos([oauthInfo]);
 
         // PORTAL //
+        //  - IGC ORG IN ARCGIS.COM
         const portal = new Portal({url: DiagramReader.CONFIG.PORTAL_URL});
 
         // SHARING URL //
@@ -91,9 +92,11 @@ class DiagramReader extends EventTarget {
    */
   initializeGeoPlannerLayers({portal}) {
     require([
+      'esri/config',
+      'esri/request',
       'esri/layers/Layer',
       'esri/symbols/support/symbolUtils'
-    ], (Layer, symbolUtils) => {
+    ], (esriConfig, esriRequest, Layer, symbolUtils) => {
 
       const getDiagramColor = ({plansLayer, diagramFeature}) => {
         return new Promise((resolve, reject) => {
@@ -106,6 +109,7 @@ class DiagramReader extends EventTarget {
       const geoplannerItemsList = document.getElementById('geoplanner-items-list');
       const geoplannerItemLabel = document.getElementById('geoplanner-item-label');
       const geoplannerItemDetails = document.getElementById('geoplanner-item-details');
+      const gdhFeaturesList = document.getElementById('gdh-features-list');
       const gdhDiagramsList = document.getElementById('gdh-diagrams-list');
 
       if (portal) {
@@ -130,13 +134,12 @@ class DiagramReader extends EventTarget {
 
             const layerItemNode = document.createElement('div');
             layerItemNode.classList.add('layer-item');
-            layerItemNode.innerHTML = `[${layerPortalItem.id}] ${layerPortalItem.title}`;
+            layerItemNode.innerHTML = `[${ layerPortalItem.id }] ${ layerPortalItem.title }`;
 
             return layerItemNode;
           });
           // DISPLAY LIST OF ALL GEOPLANNER LAYER ITEMS //
           geoplannerItemsList.replaceChildren(...layerItemNodes);
-
 
           // SELECT FIRST FEATURE LAYER ITEM FOUND //
           const firstLayerPortalItem = layerPortalItems[0];
@@ -152,7 +155,6 @@ class DiagramReader extends EventTarget {
               //  - hardocded to find a layer with a title that includes 'interventions'...
               //  - TODO: FIND BETTER WAY TO HANDLE THIS...
               const interventionsLayer = layer.layers.find(l => l.title.toLowerCase().includes('interventions'));
-
               // DISPLAY NAME OF GEOPLANNER DESIGN LAYER //
               geoplannerItemLabel.innerHTML = interventionsLayer.title;
 
@@ -166,8 +168,13 @@ class DiagramReader extends EventTarget {
               //    - WE WANT THE GEOMETRY AND ALL THE FIELDS SO WE CAN REPLICATE THEM WHEN ADDING AS NEW DESIGN/PLAN...
               //
               const analysisQuery = interventionsLayer.createQuery();
+
+              // DIAGRAMS FILTER //
+              const diagramsFilter = `${ analysisQuery.where } AND (Intervention_System <> 'NA')`;  // TODO: REPLACE 'NA' WITH NULL VALUES?
+
+              // SET ANALYSIS QUERY PARAMETERS //
               analysisQuery.set({
-                where: `${ analysisQuery.where } AND (Intervention_System <> 'NA')`,  // TODO: REPLACE 'NA' WITH NULL VALUES?
+                where: diagramsFilter,
                 outFields: ['*'],
                 returnGeometry: true
               });
@@ -213,13 +220,73 @@ class DiagramReader extends EventTarget {
                   return diagramItem;
                 });
                 // ADD DIAGRAMS TO LIST //
-                gdhDiagramsList.replaceChildren(...diagramItems);
+                gdhFeaturesList.replaceChildren(...diagramItems);
 
                 //
                 // THIS IS THE ORGANIZED LIST OF DIAGRAMS BY SYSTEM //
                 //
                 console.info(diagramBySystems);
+
               });
+
+              //
+              // GET GEOJSON //
+              //
+              const directQueryUrl = `${ interventionsLayer.url }/${ interventionsLayer.layerId }/query`;
+              esriRequest(directQueryUrl, {
+                query: {
+                  where: analysisQuery.where,
+                  outFields: '*',
+                  f: 'geojson'
+                },
+                responseType: "json"
+              }).then((response) => {
+                const data = response.data;
+                console.info("GeoJSON via esriRequest(): ", data);
+
+                //
+                // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
+                //
+                const diagramBySystemsGeoJSON = new Map();
+
+                const diagramItems = data.features.map(diagramFeature => {
+
+                  // THIS PROVIDES A SIMPLE OBJECT TO HOLD RELEVANT FEATURE/DIAGRAM PROPERTIES //
+                  const planInfo = {
+                    'objectid': diagramFeature.properties['OBJECTID'],
+                    'project': diagramFeature.properties['Geodesign_ProjectID'],
+                    'scenario_plan': diagramFeature.properties['Geodesign_ScenarioID'],
+                    'intervention_system': diagramFeature.properties['Intervention_System'],
+                    'intervention_type': diagramFeature.properties['Intervention_Type']
+                  };
+
+                  // FEATURE/DIAGRAM ITEM //
+                  const diagramItem = document.createElement('div');
+                  diagramItem.classList.add('diagram-item');
+                  diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
+
+                  // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
+                  // getDiagramColor({plansLayer: interventionsLayer, diagramFeature}).then(({color}) => {
+                  //   diagramItem.style.borderLeftColor = color.toCss();
+                  // });
+
+                  // ORGANIZE FEATURES/DIAGRAMS BY SYSTEM //
+                  const diagramBySystem = diagramBySystemsGeoJSON.get(planInfo.intervention_system) || [];
+                  diagramBySystem.push(diagramFeature);
+                  diagramBySystemsGeoJSON.set(planInfo.intervention_system, diagramBySystem);
+
+                  return diagramItem;
+                });
+                // ADD DIAGRAMS TO LIST //
+                gdhDiagramsList.replaceChildren(...diagramItems);
+
+                //
+                // THIS IS THE ORGANIZED LIST OF DIAGRAMS BY SYSTEM //
+                //
+                console.info(diagramBySystemsGeoJSON);
+
+              });
+
             });
           });
         });

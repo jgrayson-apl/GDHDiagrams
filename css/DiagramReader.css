@@ -1,11 +1,44 @@
 
 .pane {
+  position: relative;
   margin: 5px;
   padding: 10px;
   border: solid 1px #cccccc;
 }
 
+
+.pane.collapsed {
+  height: 0;
+}
+
+.pane .toggle {
+  cursor: pointer;
+  position: absolute;
+  display: inline-block;
+  text-align: center;
+  top: 5px;
+  right: 5px;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: solid 1px #cccccc;
+}
+
+.pane .toggle:before {
+  content: '-';
+}
+
+.pane.collapsed .toggle:after {
+  content: '+';
+}
+
+.pane .toggle:hover {
+  background-color: #cccccc;
+  border-color: #666666;
+}
+
 .pane-section {
+  position: relative;
   margin: 5px;
   padding: 10px;
   background-color: #efefef;
