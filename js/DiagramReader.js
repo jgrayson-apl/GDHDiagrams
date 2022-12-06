@@ -134,9 +134,11 @@ class DiagramReader extends EventTarget {
         }).then(({results}) => {
 
           // LAYER PORTAL ITEMS //
+          // - A PORTAL ITEM REPRESENTS THE SIMPLE METADATA ABOUT THE ITEM
+          //   AND IN THIS CASE WE'RE JUST INTERESTED IN THE FEATURE LAYERS
           const layerPortalItems = results.filter(item => item.isLayer);
 
-          // GEOPLANNER DESIGN LAYERS //
+          // GEOPLANNER DESIGN LAYERS ITEMS //
           const layerItemNodes = layerPortalItems.map(layerPortalItem => {
 
             const layerItemNode = document.createElement('div');
@@ -149,13 +151,15 @@ class DiagramReader extends EventTarget {
           geoplannerItemsList.replaceChildren(...layerItemNodes);
 
           // SELECT FIRST FEATURE LAYER ITEM FOUND //
+          // - IDEALLY THE USER COULD PICK FROM THE AVAILABLE PLANS... MAYBE... ???
           const firstLayerPortalItem = layerPortalItems[0];
 
           // GET THE LAYER FROM THE PORTAL ITEM //
+          // - THIS WILL INSTANTIATE A FEATURE LAYER BASED ON THE PORTAL ITEM
           Layer.fromPortalItem(firstLayerPortalItem).then((layer) => {
-            // THE GEOPLANNER LAYER ITEM REFERENCES A LAYER WITH MULTIPLE SUBLAYERS
+            // THE GEOPLANNER LAYER ITEM REFERENCES A FEATURE LAYER WITH MULTIPLE SUBLAYERS
             // SO WE GET BACK A GROUP LAYER WITH TWO FEATURE LAYERS
-            // SO WE THEN MAKE SURE ALL SUB LAYERS ARE LOADED...
+            // AND WE THEN MAKE SURE ALL SUB LAYERS ARE LOADED...
             layer.loadAll().then(() => {
 
               // INTERVENTIONS LAYER //
@@ -167,7 +171,7 @@ class DiagramReader extends EventTarget {
 
               // DISPLAY FILTER USED OF THE GEOPLANNER DESIGN LAYER //
               // - THIS WILL SHOW THE DEFAULT QUERY USED FOR THIS LAYER
-              // - AND SHOWS THE ID OF THE GEOPLANNER PROJECT AND DESIGN
+              //   AND SHOWS THE ID OF THE GEOPLANNER PROJECT AND DESIGN
               geoplannerItemDetails.innerHTML = interventionsLayer.definitionExpression;
 
               //
