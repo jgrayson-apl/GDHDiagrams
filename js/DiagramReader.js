@@ -177,10 +177,12 @@ class DiagramReader extends EventTarget {
               const analysisQuery = interventionsLayer.createQuery();
 
               // DIAGRAMS FILTER //
-              //  - IN ADDITION TO THE DEFAULT FILTER ALSO IGNORE ANY FEATURE WITHOUT AN INTERVENTION //
+              //  - IN ADDITION TO THE DEFAULT FILTER ALSO IGNORE ANY FEATURE WITHOUT AN INTERVENTION
+              //  - ALSO USED TO RETRIEVE THE GEOJSON FEATURES
               const diagramsFilter = `${ analysisQuery.where } AND (Intervention_System <> 'NA')`;  // TODO: REPLACE 'NA' WITH NULL VALUES?
 
               // SET ANALYSIS QUERY PARAMETERS //
+              //  - UPDATE THE WHERE CLAUSE TO ONLY INCLUDE FEATURES WITH AN INTERVENTION
               analysisQuery.set({
                 where: diagramsFilter,
                 outFields: ['*'],
