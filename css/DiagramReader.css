@@ -59,3 +59,7 @@
   padding: 2px;
   border-left: solid 1.5rem transparent;
 }
+
+.diagram-item.multipart {
+  color: red;
+}

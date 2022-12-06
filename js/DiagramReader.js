@@ -219,6 +219,9 @@ class DiagramReader extends EventTarget {
                   diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
                   diagramItem.title = JSON.stringify(diagramFeature, null, 2);
 
+                  const isMultiPartGeometry = (diagramFeature.geometry.rings.length > 1);
+                  isMultiPartGeometry && diagramItem.classList.add('multipart');
+
                   // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
                   getDiagramColor({plansLayer: interventionsLayer, diagramAttributes: diagramAttributes}).then(({color}) => {
                     diagramItem.style.borderLeftColor = color.toCss();
@@ -281,6 +284,9 @@ class DiagramReader extends EventTarget {
                   diagramItem.classList.add('diagram-item');
                   diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
                   diagramItem.title = JSON.stringify(diagramFeature, null, 2);
+
+                  const isMultiPartGeometry = (diagramFeature.geometry.coordinates.length > 1);
+                  isMultiPartGeometry && diagramItem.classList.add('multipart');
 
                   // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
                   getDiagramColor({plansLayer: interventionsLayer, diagramAttributes: diagramProperties}).then(({color}) => {
