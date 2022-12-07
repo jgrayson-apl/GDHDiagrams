@@ -197,7 +197,13 @@ class DiagramReader extends EventTarget {
                 returnGeometry: true
               });
 
-              // GET DIAGRAM COLOR BASED ON CURRENT RENDERER //
+              /**
+               * GET DIAGRAM COLOR BASED ON CURRENT RENDERER
+               *
+               * @param diagramAttributes
+               * @returns {Promise<unknown>}
+               * @private
+               */
               const _getDiagramColor = ({diagramAttributes}) => {
                 return new Promise((resolve, reject) => {
                   symbolUtils.getDisplayedColor({attributes: diagramAttributes}, {renderer: interventionsLayer.renderer}).then((color) => {
@@ -206,8 +212,16 @@ class DiagramReader extends EventTarget {
                 });
               };
 
-              // UI - DISPLAY LIST OF FEATURES //
-              const _displayFeaturesList = (container, features, isGeoJSON) => {
+              /**
+               * UI - DISPLAY LIST OF FEATURES
+               *
+               * @param container
+               * @param features
+               * @param isGeoJSON
+               * @returns {Map<any, any>}
+               * @private
+               */
+              const _displayFeaturesList = (container, features, isGeoJSON = false) => {
 
                 const diagramBySystems = new Map();
 
@@ -251,6 +265,19 @@ class DiagramReader extends EventTarget {
 
                 return diagramBySystems;
               };
+
+              /**
+               * based on: https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+               *
+               * @returns {string}
+               */
+              function _uuid() {
+                const url = URL.createObjectURL(new Blob());
+                const [id] = url.toString().split('/').reverse();
+                URL.revokeObjectURL(url);
+                return id.replace(/-/g, '');
+              }
+
 
               //
               //
@@ -300,24 +327,35 @@ class DiagramReader extends EventTarget {
                 const diagramBySystems = _displayFeaturesList(gdhFeaturesList, analysisFS.features);
                 console.info("Diagrams by System as Esri JSON: ", diagramBySystems);
 
+
+                //
+                //
+                // BUTTON ACTIONS
+                //
+                //
+
+                //
                 // CREATE A LIST OF RANDOM CANDIDATE FEATURES //
+                //
                 let _candidateFeatures;
                 getRandomCandidatesBtn.addEventListener('click', () => {
                   // CANDIDATE GEOPLANNER SCENARIO FEATURES //
                   _candidateFeatures = createNewGeoPlannerScenarioCandidates(analysisFS.features);
+                  console.info('Random Candidate Features: ', _candidateFeatures);
 
                   const diagramBySystemsCandidates = _displayFeaturesList(gdhCandidatesList, _candidateFeatures);
                   console.info("Diagrams by System for Candidate Features: ", diagramBySystemsCandidates);
-
-                  console.info('Random Candidate Features: ', _candidateFeatures);
                 });
 
+                //
                 // ADD RANDOM CANDIDATE FEATURED TO THE GEOPLANNER PROJECT AS A NEW SCENARIO //
+                //
                 addCandidatesBtn.addEventListener('click', () => {
-                  if (_candidateFeatures) {
+                  if (_candidateFeatures && confirm('Add random candidate features as new GeoPlanner Scenario?')) {
                     // NEW GEOPLANNER SCENARIO //
                     addNewGeoPlannerScenario(_candidateFeatures).then(({newScenarioFeatures}) => {
                       console.info('New GeoPlanner Scenario Features: ', newScenarioFeatures);
+
                       const diagramBySystemsScenario = _displayFeaturesList(gdhScenarioList, newScenarioFeatures);
                       console.info("Diagrams by System from new GeoPlanner Scenario: ", diagramBySystemsScenario);
                     });
@@ -327,18 +365,6 @@ class DiagramReader extends EventTarget {
                 });
 
               });
-
-              /**
-               * based on: https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
-               *
-               * @returns {string}
-               */
-              function _uuid() {
-                const url = URL.createObjectURL(new Blob());
-                const [id] = url.toString().split('/').reverse();
-                URL.revokeObjectURL(url);
-                return id.replace(/-/g, '');
-              }
 
               /**
                *
