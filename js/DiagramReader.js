@@ -348,7 +348,7 @@ class DiagramReader extends EventTarget {
                * @param features
                * @returns {*[]}
                */
-              const createNewGeoPlannerScenarioCandidates = features => {
+              const createNewGeoPlannerScenarioCandidates = (features) => {
 
                 // GET RANDOM CANDIDATE FEATURES //
                 const randomCount = 22;
