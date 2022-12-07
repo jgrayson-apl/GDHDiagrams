@@ -338,7 +338,7 @@ class DiagramReader extends EventTarget {
                 let _candidateFeatures;
                 getRandomCandidatesBtn.addEventListener('click', () => {
                   // CANDIDATE GEOPLANNER SCENARIO FEATURES //
-                  _candidateFeatures = createNewGeoPlannerScenarioCandidates(analysisFS.features);
+                  _candidateFeatures = createRandomScenarioCandidates(analysisFS.features);
                   console.info('Random Candidate Features: ', _candidateFeatures);
 
                   const diagramBySystemsCandidates = _displayFeaturesList(gdhCandidatesList, _candidateFeatures);
@@ -370,12 +370,12 @@ class DiagramReader extends EventTarget {
                *  - SIMILAR AS A SET OF GDH NEGOTIATED DIAGRAMS BECOMES A NEW DESIGN...
                *
                * @param features
+               * @param randomCount
                * @returns {*[]}
                */
-              const createNewGeoPlannerScenarioCandidates = (features) => {
+              const createRandomScenarioCandidates = (features, randomCount = 22) => {
 
                 // GET RANDOM CANDIDATE FEATURES //
-                const randomCount = 22;
                 const sourceFeatures = [...features];
                 const candidateFeatures = [];
                 do {
