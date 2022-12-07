@@ -105,19 +105,23 @@ class DiagramReader extends EventTarget {
       'esri/symbols/support/symbolUtils'
     ], (esriConfig, esriRequest, Layer, symbolUtils) => {
 
-      const getDiagramColor = ({plansLayer, diagramAttributes}) => {
-        return new Promise((resolve, reject) => {
-          symbolUtils.getDisplayedColor({attributes: diagramAttributes}, {renderer: plansLayer.renderer}).then((color) => {
-            resolve({color});
-          });
-        });
-      };
-
       const geoplannerItemsList = document.getElementById('geoplanner-items-list');
       const geoplannerItemLabel = document.getElementById('geoplanner-item-label');
       const geoplannerItemDetails = document.getElementById('geoplanner-item-details');
       const gdhFeaturesList = document.getElementById('gdh-features-list');
       const gdhDiagramsList = document.getElementById('gdh-diagrams-list');
+      const gdhCandidatesList = document.getElementById('gdh-candidates-list');
+      const gdhScenarioList = document.getElementById('gdh-scenario-list');
+      const getRandomCandidatesBtn = document.getElementById('get-random-candidates-btn');
+      const addCandidatesBtn = document.getElementById('add-candidates-btn');
+
+      /**
+       *
+       *  project: id, projecttitle, projectdesc
+       *  system: id, sysname, syscolor, systag, syscost, sysbudget
+       *  diagram: id, worlddescription, author, created_at, rank, sysid
+       *
+       */
 
       if (portal) {
 
@@ -134,8 +138,8 @@ class DiagramReader extends EventTarget {
         }).then(({results}) => {
 
           // LAYER PORTAL ITEMS //
-          // - A PORTAL ITEM REPRESENTS THE SIMPLE METADATA ABOUT THE ITEM
-          //   AND IN THIS CASE WE'RE JUST INTERESTED IN THE FEATURE LAYERS
+          // - A PORTAL ITEM REPRESENTS THE SIMPLE METADATA ABOUT A GIS THING (MAP, LAYER, ETC...)
+          //   AND IN THIS CASE WE'RE JUST INTERESTED IN THE FEATURE LAYERS...
           const layerPortalItems = results.filter(item => item.isLayer);
 
           // GEOPLANNER DESIGN LAYERS ITEMS //
@@ -166,9 +170,9 @@ class DiagramReader extends EventTarget {
               //  - hardocded to find a layer with a title that includes 'interventions'...
               //  - TODO: FIND BETTER WAY TO HANDLE THIS...
               const interventionsLayer = layer.layers.find(l => l.title.toLowerCase().includes('interventions'));
+
               // DISPLAY NAME OF GEOPLANNER DESIGN LAYER //
               geoplannerItemLabel.innerHTML = interventionsLayer.title;
-
               // DISPLAY FILTER USED OF THE GEOPLANNER DESIGN LAYER //
               // - THIS WILL SHOW THE DEFAULT QUERY USED FOR THIS LAYER
               //   AND SHOWS THE ID OF THE GEOPLANNER PROJECT AND DESIGN
@@ -181,8 +185,8 @@ class DiagramReader extends EventTarget {
               const analysisQuery = interventionsLayer.createQuery();
 
               // DIAGRAMS FILTER //
-              //  - IN ADDITION TO THE DEFAULT FILTER ALSO IGNORE ANY FEATURE WITHOUT AN INTERVENTION
-              //  - ALSO USED TO RETRIEVE THE GEOJSON FEATURES
+              //  - IN ADDITION TO THE DEFAULT FILTER WE ALSO IGNORE ANY FEATURE WITHOUT AN INTERVENTION
+              //  - NOTE: ALSO USED WHEN RETRIEVING THE GEOJSON FEATURES...
               const diagramsFilter = `${ analysisQuery.where } AND (Intervention_System <> 'NA')`;  // TODO: REPLACE 'NA' WITH NULL VALUES?
 
               // SET ANALYSIS QUERY PARAMETERS //
@@ -193,65 +197,76 @@ class DiagramReader extends EventTarget {
                 returnGeometry: true
               });
 
-              //
-              // BREAK DOWN THE LIST OF FEATURES BY SYSTEM TO PRODUCE A LIST OF DIAGRAMS
-              //
-              interventionsLayer.queryFeatures(analysisQuery).then(analysisFS => {
-                console.info("Esri JSON features via queryFeatures(): ", analysisFS);
+              // GET DIAGRAM COLOR BASED ON CURRENT RENDERER //
+              const _getDiagramColor = ({diagramAttributes}) => {
+                return new Promise((resolve, reject) => {
+                  symbolUtils.getDisplayedColor({attributes: diagramAttributes}, {renderer: interventionsLayer.renderer}).then((color) => {
+                    resolve({color});
+                  });
+                });
+              };
 
-                //
-                // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
-                //
+              // UI - DISPLAY LIST OF FEATURES //
+              const _displayFeaturesList = (container, features, isGeoJSON) => {
+
                 const diagramBySystems = new Map();
 
-                // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
-                const diagramItems = analysisFS.features.map(diagramFeature => {
+                const diagramItems = features.map(diagramFeature => {
 
                   // DIAGRAM ATTRIBUTES //
-                  const diagramAttributes = diagramFeature.attributes;
+                  const diagramAttributes = isGeoJSON ? diagramFeature.properties : diagramFeature.attributes;
 
-                  // THIS PROVIDES A SIMPLE OBJECT TO HOLD RELEVANT FEATURE/DIAGRAM PROPERTIES //
-                  const planInfo = {
-                    'objectid': diagramAttributes['OBJECTID'],
-                    'project': diagramAttributes['Geodesign_ProjectID'],
-                    'scenario_plan': diagramAttributes['Geodesign_ScenarioID'],
-                    'intervention_system': diagramAttributes['Intervention_System'],
-                    'intervention_type': diagramAttributes['Intervention_Type']
-                  };
+                  // RELEVANT FEATURE/DIAGRAM PROPERTIES //
+                  const {
+                    OBJECTID,
+                    Geodesign_ProjectID,
+                    Geodesign_ScenarioID,
+                    Intervention_System,
+                    Intervention_Type
+                  } = diagramAttributes;
 
                   // FEATURE/DIAGRAM ITEM //
                   const diagramItem = document.createElement('div');
                   diagramItem.classList.add('diagram-item');
-                  diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
+                  diagramItem.innerHTML = `[ ${ OBJECTID } ] ${ Intervention_System } | ${ Intervention_Type }`;
                   diagramItem.title = JSON.stringify(diagramFeature, null, 2);
 
-                  const isMultiPartGeometry = (diagramFeature.geometry.rings.length > 1);
+                  const isMultiPartGeometry = isGeoJSON ? (diagramFeature.geometry.coordinates.length > 1) : (diagramFeature.geometry.rings.length > 1);
                   isMultiPartGeometry && diagramItem.classList.add('multipart');
 
                   // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
-                  getDiagramColor({plansLayer: interventionsLayer, diagramAttributes: diagramAttributes}).then(({color}) => {
+                  _getDiagramColor({diagramAttributes: diagramAttributes}).then(({color}) => {
                     diagramItem.style.borderLeftColor = color.toCss();
                   });
 
                   // ORGANIZE FEATURES/DIAGRAMS BY SYSTEM //
-                  const diagramBySystem = diagramBySystems.get(planInfo.intervention_system) || [];
+                  const diagramBySystem = diagramBySystems.get(Intervention_System) || [];
                   diagramBySystem.push(diagramFeature);
-                  diagramBySystems.set(planInfo.intervention_system, diagramBySystem);
+                  diagramBySystems.set(Intervention_System, diagramBySystem);
 
                   return diagramItem;
                 });
                 // ADD DIAGRAMS TO LIST //
-                gdhFeaturesList.replaceChildren(...diagramItems);
+                container.replaceChildren(...diagramItems);
 
-                //
-                // THIS IS THE ORGANIZED LIST OF DIAGRAMS BY SYSTEM //
-                //
-                console.info("Diagrams by System as Esri JSON: ", diagramBySystems);
-
-              });
+                return diagramBySystems;
+              };
 
               //
-              // GET THE SAME FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
+              //
+              // BELOW WE RETRIEVE THE FEATURES FROM THE SERVICE
+              // - AS GEOJSON
+              // - AS ESRI FEATURES
+              //
+              // AND THEN WE CREATE A RANDOM SUBSET OF FEATURES
+              // AND THEN ADD THEM AS A NEW GEOPLANNER SCENARIO
+              //
+              //
+
+              //
+              // GET THE FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
+              //  - esri/request IS A GENERIC METHOD TO MAKE DIRECT WEB CALLS BUT WILL HANDLE ESRI SPECIFIC USE-CASES
+              //  - HERE WE USE IT TO MAKE A DIRECT CALL TO THE REST QUERY ENDPOINT OF THE FEATURE LAYER
               //
               const directQueryUrl = `${ interventionsLayer.url }/${ interventionsLayer.layerId }/query`;
               esriRequest(directQueryUrl, {
@@ -268,53 +283,143 @@ class DiagramReader extends EventTarget {
                 //
                 // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
                 //
-                const diagramBySystemsGeoJSON = new Map();
-
-                // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
-                const diagramItems = data.features.map(diagramFeature => {
-
-                  // DIAGRAM PROPERTIES //
-                  const diagramProperties = diagramFeature.properties;
-
-                  // THIS PROVIDES A SIMPLE OBJECT TO HOLD RELEVANT FEATURE/DIAGRAM PROPERTIES //
-                  const planInfo = {
-                    'objectid': diagramProperties['OBJECTID'],
-                    'project': diagramProperties['Geodesign_ProjectID'],
-                    'scenario_plan': diagramProperties['Geodesign_ScenarioID'],
-                    'intervention_system': diagramProperties['Intervention_System'],
-                    'intervention_type': diagramProperties['Intervention_Type']
-                  };
-
-                  // FEATURE/DIAGRAM ITEM //
-                  const diagramItem = document.createElement('div');
-                  diagramItem.classList.add('diagram-item');
-                  diagramItem.innerHTML = `[ ${ planInfo.objectid } ] ${ planInfo.intervention_system } | ${ planInfo.intervention_type }`;
-                  diagramItem.title = JSON.stringify(diagramFeature, null, 2);
-
-                  const isMultiPartGeometry = (diagramFeature.geometry.coordinates.length > 1);
-                  isMultiPartGeometry && diagramItem.classList.add('multipart');
-
-                  // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
-                  getDiagramColor({plansLayer: interventionsLayer, diagramAttributes: diagramProperties}).then(({color}) => {
-                    diagramItem.style.borderLeftColor = color.toCss();
-                  });
-
-                  // ORGANIZE FEATURES/DIAGRAMS BY SYSTEM //
-                  const diagramBySystem = diagramBySystemsGeoJSON.get(planInfo.intervention_system) || [];
-                  diagramBySystem.push(diagramFeature);
-                  diagramBySystemsGeoJSON.set(planInfo.intervention_system, diagramBySystem);
-
-                  return diagramItem;
-                });
-                // ADD DIAGRAMS TO LIST //
-                gdhDiagramsList.replaceChildren(...diagramItems);
-
-                //
-                // THIS IS THE ORGANIZED LIST OF DIAGRAMS BY SYSTEM //
-                //
+                const diagramBySystemsGeoJSON = _displayFeaturesList(gdhDiagramsList, data.features, true);
                 console.info("Diagrams by System as GeoJSON: ", diagramBySystemsGeoJSON);
+              });
+
+              //
+              // GET THE FEATURES FROM THE FEATURE LAYER //
+              // BREAK DOWN THE LIST OF FEATURES BY SYSTEM TO PRODUCE A LIST OF DIAGRAMS
+              //
+              interventionsLayer.queryFeatures(analysisQuery).then(analysisFS => {
+                console.info("Esri JSON features via queryFeatures(): ", analysisFS);
+
+                //
+                // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
+                //
+                const diagramBySystems = _displayFeaturesList(gdhFeaturesList, analysisFS.features);
+                console.info("Diagrams by System as Esri JSON: ", diagramBySystems);
+
+                // CREATE A LIST OF RANDOM CANDIDATE FEATURES //
+                let _candidateFeatures;
+                getRandomCandidatesBtn.addEventListener('click', () => {
+                  // CANDIDATE GEOPLANNER SCENARIO FEATURES //
+                  _candidateFeatures = createNewGeoPlannerScenarioCandidates(analysisFS.features);
+
+                  const diagramBySystemsCandidates = _displayFeaturesList(gdhCandidatesList, _candidateFeatures);
+                  console.info("Diagrams by System for Candidate Features: ", diagramBySystemsCandidates);
+
+                  console.info('Random Candidate Features: ', _candidateFeatures);
+                });
+
+                // ADD RANDOM CANDIDATE FEATURED TO THE GEOPLANNER PROJECT AS A NEW SCENARIO //
+                addCandidatesBtn.addEventListener('click', () => {
+                  if (_candidateFeatures) {
+                    // NEW GEOPLANNER SCENARIO //
+                    addNewGeoPlannerScenario(_candidateFeatures).then(({newScenarioFeatures}) => {
+                      console.info('New GeoPlanner Scenario Features: ', newScenarioFeatures);
+                      const diagramBySystemsScenario = _displayFeaturesList(gdhScenarioList, newScenarioFeatures);
+                      console.info("Diagrams by System from new GeoPlanner Scenario: ", diagramBySystemsScenario);
+                    });
+                  } else {
+                    alert('please get random candidates first...');
+                  }
+                });
 
               });
+
+              /**
+               * based on: https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+               *
+               * @returns {string}
+               */
+              function _uuid() {
+                const url = URL.createObjectURL(new Blob());
+                const [id] = url.toString().split('/').reverse();
+                URL.revokeObjectURL(url);
+                return id.replace(/-/g, '');
+              }
+
+              /**
+               *
+               * CREATE A RANDOM SELECTION OF CANDIDATE FEATURES
+               *  - SIMILAR AS A SET OF GDH NEGOTIATED DIAGRAMS BECOMES A NEW DESIGN...
+               *
+               * @param features
+               * @returns {*[]}
+               */
+              const createNewGeoPlannerScenarioCandidates = features => {
+
+                // GET RANDOM CANDIDATE FEATURES //
+                const randomCount = 22;
+                const sourceFeatures = [...features];
+                const candidateFeatures = [];
+                do {
+                  const candidateIdx = Math.floor(Math.random() * sourceFeatures.length);
+                  const candidateFeature = sourceFeatures.splice(candidateIdx, 1)[0];
+                  candidateFeatures.push(candidateFeature);
+                } while (candidateFeatures.length < randomCount);
+
+                // CREATE NEW SCENARIO ID //
+                const newGeoPlannerScenarioID = _uuid();
+
+                // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
+                return candidateFeatures.map(diagramFeature => {
+
+                  // DIAGRAM ATTRIBUTES //
+                  const diagramAttributes = diagramFeature.attributes;
+
+                  // ASSIGN NEW GEOPLANNER SCENARIO ID //
+                  diagramAttributes.Geodesign_ScenarioID = newGeoPlannerScenarioID;
+
+                  // ...WHEN AVAILABLE WE'LL MAINTAIN THE OBJECTID IN SOME FIELD... //
+                  //diagramAttributes.SOURCEID = diagramAttributes.OBJECTID;
+
+                  // DELETE SYSTEM FIELDS //
+                  delete diagramAttributes.Shape__Area;
+                  delete diagramAttributes.Shape__Length;
+                  // - NEW OBJECTID AND GLOBALID WILL BE ASSIGNED BY FEATURE LAYER WHEN ADDED //
+                  delete diagramAttributes.OBJECTID;
+                  delete diagramAttributes.GLOBALID;
+
+                  return diagramFeature;
+                });
+
+              };
+
+              /**
+               *
+               * ADD THE CANDIDATE FEATURES TO THE GEOPLANNER PROJECT AS A NEW SCENARIO
+               *
+               * @param candidateFeatures
+               * @returns {Promise<unknown>}
+               */
+              const addNewGeoPlannerScenario = (candidateFeatures) => {
+                return new Promise((resolve, reject) => {
+                  // ADD THE CANDIDATE FEATURES TO THE FEATURE LAYER //
+                  interventionsLayer.applyEdits({addFeatures: candidateFeatures}).then((editsResults) => {
+
+                    // LIST OF OBJECTIDS OF NEWLY ADDED FEATURES //
+                    // - APPLY EDITS RETURNS THE NEW OBJECTIDS OF ADDED FEATURES - OR ERROR IF FAILED //
+                    const addFeaturesOIDs = editsResults.addFeatureResults.reduce((oids, addFeatureResult) => {
+                      return addFeatureResult.error ? oids : oids.concat(addFeatureResult.objectId);
+                    }, []);
+
+                    // QUERY PARAMS TO RETRIEVE THE NEW SCENARIO FEATURES //
+                    // - RESET WHERE CLAUSE TO IGNORE EXISTING SCENARIO FILTER //
+                    const scenarioQuery = interventionsLayer.createQuery();
+                    scenarioQuery.set({
+                      where: '1=1', // ...reset where clause...  //
+                      objectIds: addFeaturesOIDs,
+                      outFields: ['*']
+                    });
+                    // RETRIEVE THE NEWLY ADDED FEATURES //
+                    interventionsLayer.queryFeatures(scenarioQuery).then((scenarioFS) => {
+                      resolve({newScenarioFeatures: scenarioFS.features});
+                    });
+                  });
+                });
+              };
 
             });
           });

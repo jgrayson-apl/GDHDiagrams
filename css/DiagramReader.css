@@ -19,19 +19,20 @@
   font-weight: bold;
   font-size: larger;
   top: 5px;
-  right: 5px;
+  right: 15px;
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 50%;
   border: solid 1px #cccccc;
+  background-color: #efefef;
 }
 
 .pane .toggle:before {
-  content: '+';
+  content: '-';
 }
 
 .pane.collapsed .toggle:before {
-  content: '-';
+  content: '+';
 }
 
 .pane .toggle:hover {
@@ -43,9 +44,16 @@
   position: relative;
   margin: 5px;
   padding: 10px;
-  max-height: 400px;
+  max-height: 300px;
   overflow: auto;
   background-color: #efefef;
+  border: solid 1px #cccccc;
+}
+
+.pane-title {
+  padding: 5px 0;
+  font-size: larger;
+  font-weight: 600;
 }
 
 .pane-label {
@@ -65,4 +73,18 @@
 
 .diagram-item.multipart {
   color: red;
+}
+
+.diagram-item.multipart:after {
+  content: '***';
+  font-size: larger;
+  font-weight: bold;
+}
+
+.action-btn {
+  cursor: pointer;
+  width: 300px;
+  padding: 10px;
+  margin: 5px;
+  font-size: larger;
 }
