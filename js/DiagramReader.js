@@ -155,7 +155,7 @@ class DiagramReader extends EventTarget {
           geoplannerItemsList.replaceChildren(...layerItemNodes);
 
           // SELECT FIRST FEATURE LAYER ITEM FOUND //
-          // - IDEALLY THE USER COULD PICK FROM THE AVAILABLE PLANS... MAYBE... ???
+          // - IDEALLY THE USER COULD PICK FROM THE AVAILABLE SCENARIOS
           const firstLayerPortalItem = layerPortalItems[0];
 
           // GET THE LAYER FROM THE PORTAL ITEM //
@@ -278,7 +278,6 @@ class DiagramReader extends EventTarget {
                 return id.replace(/-/g, '');
               }
 
-
               //
               //
               // BELOW WE RETRIEVE THE FEATURES FROM THE SERVICE
@@ -326,7 +325,6 @@ class DiagramReader extends EventTarget {
                 //
                 const diagramBySystems = _displayFeaturesList(gdhFeaturesList, analysisFS.features);
                 console.info("Diagrams by System as Esri JSON: ", diagramBySystems);
-
 
                 //
                 //
