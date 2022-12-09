@@ -13,6 +13,7 @@
     <!-- APPLICATION -->
     <link rel="stylesheet" type="text/css" href="css/DiagramReader.css">
     <script type="module" src="js/DiagramReader.js"></script>
+    <script type="module" src="js/Geodesignhub.js"></script>
   </head>
   <body>
     
@@ -55,6 +56,21 @@
       <div id="gdh-diagrams-list" class="pane-section"></div>
     </div>
   
+    <div id="geodesignhub_migration_cont" class="pane">
+      <span class="toggle"></span>
+      <div>
+        <span class="pane-label">Migrate Diagrams to Geodesignhub</span>
+      </div>
+      <br>
+      <label for="gdh-project-id">Project ID</label>
+      <input type="text" placeholder="Geodesignhub Project ID.."id="gdh-project-id" name="gdh-project-id">
+      
+      <label for="gdh-api-token">API Token</label>
+      <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token">
+      <br><br>
+      <button class="action-btn" id="verify-gdh-creds-btn">Verify Credentials</button>&nbsp;&nbsp;<button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
+      <pre id="gdh-console"></pre>
+    </div>
     <div class="pane">
       <span class="toggle"></span>
       <div>

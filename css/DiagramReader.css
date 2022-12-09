@@ -1,4 +1,3 @@
-
 .pane {
   position: relative;
   margin: 5px;
@@ -6,8 +5,9 @@
   border: solid 1px #cccccc;
   overflow: hidden;
 }
-
-
+.hide {
+  display: none;
+}
 .pane.collapsed > .pane-section {
   display: none;
 }
@@ -25,6 +25,26 @@
   border-radius: 50%;
   border: solid 1px #cccccc;
   background-color: #efefef;
+}
+/* Source: https://www.w3schools.com/css/css_form.asp */
+input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 250px;
+  background-color: white;
+  background-repeat: no-repeat;
+  padding: 6px 10px 6px 20px;
+}
+/* Source: https://css-tricks.com/considerations-styling-pre-tag/ */
+pre {
+  white-space: pre-wrap;
+  overflow-x: auto;
+  background-color: #ccc;
+  max-width: 50%;
+  
 }
 
 .pane .toggle:before {
