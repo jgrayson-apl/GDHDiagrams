@@ -4,7 +4,7 @@
 // https://muffinman.io/simple-javascript-api-wrapper
 // ------------------------------------------------------ //
 
-// For demo purposes I'm using this awesome Star Wars API
+// TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:9000/api/v1';
 
 
