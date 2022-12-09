@@ -1,12 +1,11 @@
 # Geodesign Hub Diagrams
 
-Simple app showing how to use the ArcGIS API for JavaScript to conect to discover group content and perform simple operations on Feature Layers.
+Simple app showing how to use the ArcGIS API for JavaScript to connect to discover IGC geodesign specific content.
 
  - [ArcGIS API for Javascript](https://developers.arcgis.com/javascript/latest/api-reference/)
- - [Calcite Components](https://developers.arcgis.com/calcite-design-system/components/)
 
 
-### [Check out the test app here](https://geoxc-apps.bd.esri.com/IGC/GDHDiagrams/index.html)
+### [Check out the test app here](https://geoxc-apps.bd.esri.com/IGC/GDHDiagrams/DiagramReader.html)
 
 
 #### For questions about the demo web application:
