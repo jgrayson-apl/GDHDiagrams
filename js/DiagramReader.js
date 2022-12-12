@@ -29,8 +29,10 @@ class DiagramReader extends EventTarget {
     super();
 
     // GEODESIGNHUB API ACCESS TOKEN //
-    const gdhApiToken = document.getElementById('gdh-api-token');
-    gdhApiToken.value = DiagramReader.CONFIG.GEODESIGNHUB_TOKEN;
+    if(DiagramReader.CONFIG.GEODESIGNHUB_TOKEN?.length) {
+      const gdhApiToken = document.getElementById('gdh-api-token');
+      gdhApiToken.value = DiagramReader.CONFIG.GEODESIGNHUB_TOKEN;
+    }
 
     // INITIALIZE PORTAL //
     this.initializeApplication().then(({portal}) => {
@@ -54,6 +56,10 @@ class DiagramReader extends EventTarget {
   }
 
   /**
+   *
+   * IdentityManager: https://developers.arcgis.com/javascript/latest/api-reference/esri-identity-IdentityManager.html
+   * OAuthInfo: https://developers.arcgis.com/javascript/latest/api-reference/esri-identity-OAuthInfo.html
+   * Portal: https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-Portal.html
    *
    * @returns {Promise<Portal>}
    */
@@ -255,6 +261,8 @@ class DiagramReader extends EventTarget {
 
   /**
    *
+   * PortalItem: https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html
+   *
    * @param {Portal} portal
    * @param {PortalItem} sourcePortalItem
    * @param {number} interventionLayerId
@@ -269,6 +277,7 @@ class DiagramReader extends EventTarget {
         const projectID = projectKeyword.replace(/geodesignProjectID/, '');
 
         // GET PORTAL ITEM DATA //
+        //  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#fetchData
         sourcePortalItem.fetchData().then((sourceLayerPortalItemData) => {
           console.info("SOURCE Scenario Portal Item: ", sourcePortalItem);
           console.info("SOURCE Scenario Portal Item Data: ", sourceLayerPortalItemData);
@@ -284,16 +293,18 @@ class DiagramReader extends EventTarget {
             type: sourcePortalItem.type,
             typeKeywords: sourcePortalItem.typeKeywords,
             url: sourcePortalItem.url,
-            tags: sourcePortalItem.tags.concat('gdhtest') // APPEND TEST TAG JUST FOR TESTING THIS APP //
+            tags: sourcePortalItem.tags.concat('gdhtest') // APPEND GDHTEST TAG JUST FOR TESTING THIS APP //
           });
 
           // PORTAL USER //
+          // - PortalUser: https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html
           const portalUser = portal.user;
 
           //
           // https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html#addItem
           //
           // ADD NEW PORTAL ITEM FOR THE NEW SCENARIO TO THE PORTAL //
+          //  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html#addItem
           portalUser.addItem({
             item: newPortalItem
           }).then(newScenarioPortalItem => {
@@ -311,14 +322,15 @@ class DiagramReader extends EventTarget {
             updatedLayerPortalItemData.layers[interventionLayerId].layerDefinition = scenarioFilter;
             console.info("UPDATE to Scenario Portal Item Data", updatedLayerPortalItemData);
 
-            //
-            // https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#update
-            //
+            // UPDATE ITEM DATA WITH NEW SUBLAYER DEFINITION
+            // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#update
             newScenarioPortalItem.update({
               data: updatedLayerPortalItemData
             }).then((updatedScenarioPortalItem) => {
               console.info("UPDATED Scenario Portal Item: ", updatedScenarioPortalItem);
 
+              // VERIFY UPDATED SUBLAYER DEFINITION
+              // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#fetchData
               updatedScenarioPortalItem.fetchData().then((updatedLayerPortalItemData) => {
                 console.info("UPDATED Scenario Portal Item Data: ", updatedLayerPortalItemData);
 
@@ -447,6 +459,7 @@ class DiagramReader extends EventTarget {
 
       if (portal) {
 
+        // DISPLAY LIST OF IGC FEATURE LAYER PORTAL ITEMS //
         this._displayPortalItemsList({portal}).then(({layerPortalItems}) => {
 
           // SELECT FIRST FEATURE LAYER ITEM FOUND //
@@ -470,6 +483,7 @@ class DiagramReader extends EventTarget {
           //
           // GET THE FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
           //  - esri/request IS A GENERIC METHOD TO MAKE DIRECT WEB CALLS BUT WILL HANDLE ESRI SPECIFIC USE-CASES
+          //      DOC: https://developers.arcgis.com/javascript/latest/api-reference/esri-request.html
           //  - HERE WE USE IT TO MAKE A DIRECT CALL TO THE QUERY REST ENDPOINT OF THE FEATURE LAYER
           //
           const geoPlannerScenarioLayerQueryUrl = `${ firstLayerPortalItem.url }/${ interventionLayerId }/query`;
