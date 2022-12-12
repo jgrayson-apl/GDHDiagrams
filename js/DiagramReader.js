@@ -346,12 +346,16 @@ class DiagramReader extends EventTarget {
     return new Promise((resolve, reject) => {
       require(['esri/request'], (esriRequest) => {
 
+        alert('Need features as Esri JSON...')
+        resolve({newScenarioFeatures: []});
+
+
         //
         // TODO: CONVERT FROM GEOJSON TO ESRI REST JSON
         //
-        const _candidateFeatures = candidateFeatures.map(feature => {
+        /*const _candidateFeatures = candidateFeatures.map(feature => {
           return feature;
-        });
+        });*/
 
         //
         //   NOTE: IF USING GDH THEN THE FEATURES SHOULD COME BACK AS ESRI JSON...
@@ -360,7 +364,7 @@ class DiagramReader extends EventTarget {
         //
         // https://developers.arcgis.com/rest/services-reference/enterprise/apply-edits-feature-service-layer-.htm
         //
-        const geoPlannerScenarioLayerApplyEditsUrl = `${ portalItem.url }/${ interventionLayerId }/applyEdits`;
+        /*const geoPlannerScenarioLayerApplyEditsUrl = `${ portalItem.url }/${ interventionLayerId }/applyEdits`;
         esriRequest(geoPlannerScenarioLayerApplyEditsUrl, {
           query: {
             adds: _candidateFeatures,
@@ -379,7 +383,16 @@ class DiagramReader extends EventTarget {
 
           // TODO: NOT NECESSARY BUT WE CAN VERFIFY BY GETTING THE NEWLY ADDED FEATURES...
           resolve({newScenarioFeatures: []});
-        });
+        });*/
+
+        //
+        //
+        //
+        //
+        //
+        //
+        //
+        //
 
         // ADD THE CANDIDATE FEATURES TO THE FEATURE LAYER //
         /*interventionsLayer.applyEdits({addFeatures: candidateFeatures}).then((editsResults) => {
