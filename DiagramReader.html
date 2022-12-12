@@ -22,8 +22,19 @@
       <div>
         <span class="pane-label">Singed-in User:</span> <span id="sign-in-user-label"></span>
       </div>
+      <div class="pane-links">
+        <span>&nbsp;|&nbsp;</span>
+        <a href="https://www.geodesignhub.com/" target="_blank">Geodesign Hub</a>
+        <span>&nbsp;|&nbsp;</span>
+        <a href="https://www.geodesignhub.com/api/" target="_blank">Geodesign Hub API</a>
+        <span>&nbsp;|&nbsp;</span>
+        <a href="https://developers.arcgis.com/javascript/latest/api-reference/" target="_blank">Esri JS API</a>
+        <span>&nbsp;|&nbsp;</span>
+        <a href="https://developers.arcgis.com/rest/users-groups-and-items/working-with-users-groups-and-items.htm" target="_blank">Esri Online Content Management</a>
+        <span>&nbsp;|&nbsp;</span>
+      </div>
     </div>
-  
+    
     <div class="pane">
       <span class="toggle"></span>
       <div>
@@ -35,59 +46,57 @@
     <div class="pane">
       <span class="toggle"></span>
       <div>
-        <span class="pane-label">GeoPlanner Design First Item:</span> <span id="geoplanner-item-label"></span>
+        <span class="pane-label">GeoPlanner Design Source Scenario Filter:</span>
       </div>
-      <div id="geoplanner-item-details" class="pane-section"></div>
+      <div id="geoplanner-source-item-details" class="pane-section"></div>
     </div>
     
-    <div class="pane">
+    <div class="pane" hidden>
       <span class="toggle"></span>
       <div>
         <span class="pane-label">GeoPlanner Scenario Features ( as Esri JSON )</span>
       </div>
       <div id="gdh-features-list" class="pane-section"></div>
     </div>
-  
+    
     <div class="pane">
       <span class="toggle"></span>
       <div>
-        <span class="pane-label">Geodesign Hub Diagrams ( as GeoJSON )</span>
+        <span class="pane-label">Geodesignhub Diagrams ( as GeoJSON )</span>
       </div>
       <div id="gdh-diagrams-list" class="pane-section"></div>
     </div>
-  
+    
+    <div class="pane">
+      <span class="toggle"></span>
+      <div>
+        <span class="pane-label">GeoPlanner Scenario Candidate Features/Diagrams</span>
+      </div>
+      <button id="get-random-candidates-btn" class="action-btn">Get Random Candidates</button>
+      <div id="gdh-candidates-list" class="pane-section"></div>
+    </div>
+    
     <div id="geodesignhub_migration_cont" class="pane">
       <span class="toggle"></span>
       <div>
         <span class="pane-label">Migrate Diagrams to Geodesignhub</span>
       </div>
-      <br>
-      <label for="gdh-project-id">Project ID</label>
-      <input type="text" placeholder="Geodesignhub Project ID.."id="gdh-project-id" name="gdh-project-id">
+      <br> <label for="gdh-project-id">Project ID</label> <input type="text" placeholder="Geodesignhub Project ID.." id="gdh-project-id" name="gdh-project-id">
       
-      <label for="gdh-api-token">API Token</label>
-      <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token">
-      <br><br>
+      <label for="gdh-api-token">API Token</label> <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token"> <br><br>
       <button class="action-btn" id="verify-gdh-creds-btn">Verify Credentials</button>&nbsp;&nbsp;<button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
       <pre id="gdh-console"></pre>
     </div>
-    <div class="pane">
-      <span class="toggle"></span>
-      <div>
-        <span class="pane-label">Set GeoPlanner Scenario Candidates</span>
-      </div>
-      <button id="get-random-candidates-btn" class="action-btn" >Get Random Candidates</button>
-      <div id="gdh-candidates-list" class="pane-section"></div>
-    </div>
-  
+    
     <div class="pane">
       <span class="toggle"></span>
       <div>
         <span class="pane-label">Create New GeoPlanner Scenario</span>
       </div>
-      <button id="add-candidates-btn" class="action-btn" >New GeoPlanner Scenario</button>
+      <button id="add-candidates-btn" class="action-btn">New GeoPlanner Scenario</button>
+      <div id="geoplanner-target-item-details" class="pane-section"></div>
       <div id="gdh-scenario-list" class="pane-section"></div>
     </div>
-    
+  
   </body>
 </html>
