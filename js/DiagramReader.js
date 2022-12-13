@@ -307,7 +307,6 @@ class DiagramReader extends EventTarget {
           //  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html#addItem
           portalUser.addItem({
             item: newPortalItem,
-            data: sourceLayerPortalItemData
           }).then(newScenarioPortalItem => {
             console.info("NEW Scenario Portal Item: ", newScenarioPortalItem);
 
@@ -320,7 +319,9 @@ class DiagramReader extends EventTarget {
             // SET NEW LAYER DEFINITION EXPRESSION //
             //
             const updatedLayerPortalItemData = {...sourceLayerPortalItemData};
-            updatedLayerPortalItemData.layers[interventionLayerId].layerDefinition = scenarioFilter;
+            updatedLayerPortalItemData.layers[interventionLayerId].layerDefinition = {
+              definitionExpression: scenarioFilter
+            };
             console.info("UPDATE to Scenario Portal Item Data", updatedLayerPortalItemData);
 
             // UPDATE ITEM DATA WITH NEW SUBLAYER DEFINITION
