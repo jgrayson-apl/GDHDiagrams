@@ -29,7 +29,7 @@ class DiagramReader extends EventTarget {
     super();
 
     // GEODESIGNHUB API ACCESS TOKEN //
-    if(DiagramReader.CONFIG.GEODESIGNHUB_TOKEN?.length) {
+    if (DiagramReader.CONFIG.GEODESIGNHUB_TOKEN?.length) {
       const gdhApiToken = document.getElementById('gdh-api-token');
       gdhApiToken.value = DiagramReader.CONFIG.GEODESIGNHUB_TOKEN;
     }
@@ -306,7 +306,8 @@ class DiagramReader extends EventTarget {
           // ADD NEW PORTAL ITEM FOR THE NEW SCENARIO TO THE PORTAL //
           //  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html#addItem
           portalUser.addItem({
-            item: newPortalItem
+            item: newPortalItem,
+            data: sourceLayerPortalItemData
           }).then(newScenarioPortalItem => {
             console.info("NEW Scenario Portal Item: ", newScenarioPortalItem);
 
@@ -334,6 +335,10 @@ class DiagramReader extends EventTarget {
               updatedScenarioPortalItem.fetchData().then((updatedLayerPortalItemData) => {
                 console.info("UPDATED Scenario Portal Item Data: ", updatedLayerPortalItemData);
 
+                //
+                // TODO: UPDATING PORTAL ITEM SHARING
+                //
+
                 resolve({portalItem: updatedScenarioPortalItem, scenarioFilter});
 
               }).catch(console.error);
@@ -358,16 +363,15 @@ class DiagramReader extends EventTarget {
     return new Promise((resolve, reject) => {
       require(['esri/request'], (esriRequest) => {
 
-        alert('Need features as Esri JSON...')
+        alert('Need features as Esri JSON...');
         resolve({newScenarioFeatures: []});
-
 
         //
         // TODO: CONVERT FROM GEOJSON TO ESRI REST JSON
         //
         /*const _candidateFeatures = candidateFeatures.map(feature => {
-          return feature;
-        });*/
+         return feature;
+         });*/
 
         //
         //   NOTE: IF USING GDH THEN THE FEATURES SHOULD COME BACK AS ESRI JSON...
@@ -377,25 +381,25 @@ class DiagramReader extends EventTarget {
         // https://developers.arcgis.com/rest/services-reference/enterprise/apply-edits-feature-service-layer-.htm
         //
         /*const geoPlannerScenarioLayerApplyEditsUrl = `${ portalItem.url }/${ interventionLayerId }/applyEdits`;
-        esriRequest(geoPlannerScenarioLayerApplyEditsUrl, {
-          query: {
-            adds: _candidateFeatures,
-            f: 'json'
-          },
-          method: 'post'
-        }).then((response) => {
-          console.info(response);
-          const editsResults = response.data;
+         esriRequest(geoPlannerScenarioLayerApplyEditsUrl, {
+         query: {
+         adds: _candidateFeatures,
+         f: 'json'
+         },
+         method: 'post'
+         }).then((response) => {
+         console.info(response);
+         const editsResults = response.data;
 
-          // LIST OF OBJECTIDS OF NEWLY ADDED FEATURES //
-          // - APPLY EDITS RETURNS THE NEW OBJECTIDS OF ADDED FEATURES - OR ERROR IF FAILED //
-          const addFeaturesOIDs = editsResults.addFeatureResults.reduce((oids, addFeatureResult) => {
-            return addFeatureResult.error ? oids : oids.concat(addFeatureResult.objectId);
-          }, []);
+         // LIST OF OBJECTIDS OF NEWLY ADDED FEATURES //
+         // - APPLY EDITS RETURNS THE NEW OBJECTIDS OF ADDED FEATURES - OR ERROR IF FAILED //
+         const addFeaturesOIDs = editsResults.addFeatureResults.reduce((oids, addFeatureResult) => {
+         return addFeatureResult.error ? oids : oids.concat(addFeatureResult.objectId);
+         }, []);
 
-          // TODO: NOT NECESSARY BUT WE CAN VERFIFY BY GETTING THE NEWLY ADDED FEATURES...
-          resolve({newScenarioFeatures: []});
-        });*/
+         // TODO: NOT NECESSARY BUT WE CAN VERFIFY BY GETTING THE NEWLY ADDED FEATURES...
+         resolve({newScenarioFeatures: []});
+         });*/
 
         //
         //
@@ -520,31 +524,33 @@ class DiagramReader extends EventTarget {
             // ADD RANDOM CANDIDATE FEATURED TO THE GEOPLANNER PROJECT AS A NEW SCENARIO //
             //
             addCandidatesBtn.addEventListener('click', () => {
-              if (_candidateFeatures && confirm('Add random candidate features as new GeoPlanner Scenario?')) {
+              if (_candidateFeatures) {
+                if (confirm('Add random candidate features as new GeoPlanner Scenario?')) {
 
-                //
-                // CREATE TARGET SCENARIO PORTAL ITEM //
-                //  - THIS WILL GIVE US THE NECESSARY NEW SCENARIO ID...
-                //
-                this._createNewGeoPlannerScenarioPortalItem({portal, sourcePortalItem: firstLayerPortalItem, interventionLayerId}).then(({portalItem, scenarioFilter}) => {
+                  //
+                  // CREATE TARGET SCENARIO PORTAL ITEM //
+                  //  - THIS WILL GIVE US THE NECESSARY NEW SCENARIO ID...
+                  //
+                  this._createNewGeoPlannerScenarioPortalItem({portal, sourcePortalItem: firstLayerPortalItem, interventionLayerId}).then(({portalItem, scenarioFilter}) => {
 
-                  // NEW SCENARIO ID //
-                  const newScenarioID = portalItem.id;
+                    // NEW SCENARIO ID //
+                    const newScenarioID = portalItem.id;
 
-                  // NEW SCENARIO FILTER //
-                  geoplannerTargetItemDetails.innerHTML = scenarioFilter;
+                    // NEW SCENARIO FILTER //
+                    geoplannerTargetItemDetails.innerHTML = scenarioFilter;
 
-                  // UPDATE NEW SCENARIO FEATURES //
-                  _candidateFeatures = this._updateScenarioCandidates(_candidateFeatures, newScenarioID);
+                    // UPDATE NEW SCENARIO FEATURES //
+                    _candidateFeatures = this._updateScenarioCandidates(_candidateFeatures, newScenarioID);
 
-                  // NEW GEOPLANNER SCENARIO //
-                  this._addNewGeoPlannerScenarioFeatures(_candidateFeatures, portalItem).then(({newScenarioFeatures}) => {
-                    console.info('New GeoPlanner Scenario Features: ', newScenarioFeatures);
+                    // NEW GEOPLANNER SCENARIO //
+                    this._addNewGeoPlannerScenarioFeatures(_candidateFeatures, portalItem).then(({newScenarioFeatures}) => {
+                      console.info('New GeoPlanner Scenario Features: ', newScenarioFeatures);
 
-                    // const diagramBySystemsScenario = this.displayFeaturesList(gdhScenarioList, newScenarioFeatures);
-                    // console.info("Diagrams by System from new GeoPlanner Scenario: ", diagramBySystemsScenario);
+                      // const diagramBySystemsScenario = this.displayFeaturesList(gdhScenarioList, newScenarioFeatures);
+                      // console.info("Diagrams by System from new GeoPlanner Scenario: ", diagramBySystemsScenario);
+                    });
                   });
-                });
+                }
               } else {
                 alert('please get random candidates first...');
               }
