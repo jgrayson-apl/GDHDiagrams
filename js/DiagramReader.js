@@ -118,7 +118,7 @@ class DiagramReader extends EventTarget {
 
       // ASK PORTAL TO FIND GEOPLANNER GROUPS //
       portal.queryGroups({
-        query: 'IGC tags:(geodesign AND geodesignProject)',
+        query: 'title:IGC tags:(geodesign AND geodesignProject)',
         sortField: 'modified',
         sortOrder: 'desc',
         num: 100
@@ -148,15 +148,22 @@ class DiagramReader extends EventTarget {
 
   /**
    *
+   * TODO: FIGURE OUT RIGHT WAY TO FIND GEOPLANNER PROJECT FOLDER...
+   *
    * @param {PortalUser} portalUser
-   * @param geoPlannerProjectID
+   * @param {string} geoPlannerProjectID
    * @returns {Promise<{portalFolder: PortalFolder}>}
    * @private
    */
   _findGeoPlannerProjectFolder({portalUser, geoPlannerProjectID}) {
     return new Promise((resolve, reject) => {
       portalUser.fetchFolders().then((userFolders) => {
+
+        //
+        // TODO: FIGURE OUT RIGHT WAY TO FIND GEOPLANNER PROJECT FOLDER...
+        //
         const geoPlannerFolder = userFolders.find(folder => folder.title === geoPlannerProjectID);
+
         resolve({portalFolder: geoPlannerFolder});
       }).catch(reject);
     });
@@ -180,11 +187,10 @@ class DiagramReader extends EventTarget {
        *
        * ASK PORTAL TO RETURN PORTAL ITEMS
        *  - items with these tags: IGC | geodesign | geodesignScenario
-       *  - TODO: ONLY APPENDED GDHTEST TAG JUST FOR TESTING THIS APP
        *
        */
       portalGroup.queryItems({
-        query: 'tags:(IGC AND geodesign AND geodesignScenario NOT gdhtest)', // TODO: ONLY APPENDED GDHTEST TAG JUST FOR TESTING THIS APP //
+        query: 'tags:(geodesign AND geodesignScenario)',
         sortField: 'modified',
         sortOrder: 'desc',
         num: 100
@@ -358,6 +364,11 @@ class DiagramReader extends EventTarget {
           console.info("SOURCE Scenario Portal Item Data: ", sourceLayerPortalItemData);
 
           //
+          // HERE WE COULD USE THE NAME OF THE DESIGN FROM GDH AS THE TITLE
+          // ALONG WITH OTHER INFORMATION IN THE SNIPPET AND DESCRIPTION
+          //
+
+          //
           // CREATE NEW PORTAL ITEM FOR THE NEW SCENARIO //
           //
           const newPortalItem = new PortalItem({
@@ -367,8 +378,8 @@ class DiagramReader extends EventTarget {
             snippet: `${ sourcePortalItem.snippet } - GDH Design`,
             description: `${ sourcePortalItem.description } - GDH Design`,
             accessInformation: sourcePortalItem.accessInformation,
-            typeKeywords: sourcePortalItem.typeKeywords,
-            tags: sourcePortalItem.tags.concat('gdhtest') // APPEND GDHTEST TAG JUST FOR TESTING THIS APP //
+            typeKeywords: sourcePortalItem.typeKeywords, // THE PROJECT ID WILL BE IN ONE OF THE TYPEKEYWORDS //
+            tags: sourcePortalItem.tags.concat('GDH')
           });
 
           // PORTAL USER //
@@ -426,7 +437,7 @@ class DiagramReader extends EventTarget {
                   esriRequest(portalItemShareUrl, {
                     query: {
                       everyone: false,
-                      org: true,
+                      org: false,
                       groups: sourcePortalGroup.id,
                       f: 'json'
                     },
@@ -450,7 +461,7 @@ class DiagramReader extends EventTarget {
    *
    * ADD THE CANDIDATE FEATURES TO THE GEOPLANNER PROJECT AS A NEW SCENARIO
    *
-   * @param {Graphic[]} candidateFeatures array of features
+   * @param {Graphic[]} candidateFeatures array of features as Esri JSON
    * @param {PortalItem} portalItem
    * @param {number} interventionLayerId
    * @returns {Promise<{newScenarioFeatures:Graphic[]}>}
@@ -491,9 +502,8 @@ class DiagramReader extends EventTarget {
           const addFeaturesOIDs = addResults.reduce((oids, addFeatureResult) => {
             return addFeatureResult.error ? oids : oids.concat(addFeatureResult.objectId);
           }, []);
-          console.info(`Add Feature Results (${ addFeaturesOIDs.length } of ${ scenarioFeatures.length }): `, addFeaturesOIDs);
 
-          resolve({addFeaturesOIDs});
+          resolve({sourceFeatureCount: scenarioFeatures.length, addFeaturesOIDs});
         }).catch(reject);
       });
     });
@@ -515,14 +525,6 @@ class DiagramReader extends EventTarget {
 
       const getRandomCandidatesBtn = document.getElementById('get-random-candidates-btn');
       const addCandidatesBtn = document.getElementById('add-candidates-btn');
-
-      /**
-       *
-       *  project: id, projecttitle, projectdesc
-       *  system: id, sysname, syscolor, systag, syscost, sysbudget
-       *  diagram: id, worlddescription, author, created_at, rank, sysid
-       *
-       */
 
       if (portal) {
 
@@ -636,14 +638,18 @@ class DiagramReader extends EventTarget {
                 //
 
                 // UPDATE NEW SCENARIO FEATURES //
+                //
+                // - TODO: THESE MODIFICATIONS WILL HAVE TO HAPPEN AND WILL CHANGE AS WE MOVE THE PROJECT FORWARD...
+                //
                 _candidateFeatures = this._updateScenarioCandidates(_candidateFeatures, scenarioID);
 
                 // NEW GEOPLANNER SCENARIO //
-                this._addNewGeoPlannerScenarioFeatures(_candidateFeatures, portalItem).then(({addFeaturesOIDs}) => {
+                this._addNewGeoPlannerScenarioFeatures(_candidateFeatures, portalItem).then(({sourceFeatureCount, addFeaturesOIDs}) => {
                   console.info('New GeoPlanner Scenario Features: ', addFeaturesOIDs);
 
                   // DISPLAY LIST OF NEW SCENARIO FEATURE OIDS //
-                  gdhScenarioList.innerHTML = addFeaturesOIDs.map(oid => `OID: ${ oid }`).join('<br>');
+                  gdhScenarioList.innerHTML = `Add Feature Results (${ addFeaturesOIDs.length } of ${ sourceFeatureCount })`;
+                  gdhScenarioList.innerHTML += addFeaturesOIDs.map(oid => `OID: ${ oid }`).join('<br>');
 
                 });
               });
