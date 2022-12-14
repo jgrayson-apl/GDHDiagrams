@@ -148,6 +148,22 @@ class DiagramReader extends EventTarget {
 
   /**
    *
+   * @param {PortalUser} portalUser
+   * @param geoPlannerProjectID
+   * @returns {Promise<{portalFolder: PortalFolder}>}
+   * @private
+   */
+  _findGeoPlannerProjectFolder({portalUser, geoPlannerProjectID}) {
+    return new Promise((resolve, reject) => {
+      portalUser.fetchFolders().then((userFolders) => {
+        const geoPlannerFolder = userFolders.find(folder => folder.title === geoPlannerProjectID);
+        resolve({portalFolder: geoPlannerFolder});
+      }).catch(reject);
+    });
+  }
+
+  /**
+   *
    * https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalGroup.html
    *
    * @param {PortalGroup} portalGroup
@@ -324,11 +340,12 @@ class DiagramReader extends EventTarget {
    * PortalItem: https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html
    *
    * @param {Portal} portal
+   * @param {PortalGroup} sourcePortalGroup
    * @param {PortalItem} sourcePortalItem
    * @param {number} interventionLayerId
    * @returns {Promise<{portalItem: PortalItem, scenarioID: string, scenarioFilter: string}>}
    */
-  _createNewGeoPlannerScenarioPortalItem({portal, sourcePortalItem, interventionLayerId = 0}) {
+  _createNewGeoPlannerScenarioPortalItem({portal, sourcePortalGroup, sourcePortalItem, interventionLayerId = 0}) {
     return new Promise((resolve, reject) => {
       require([
         'esri/request',
@@ -351,9 +368,9 @@ class DiagramReader extends EventTarget {
           const newPortalItem = new PortalItem({
             type: sourcePortalItem.type,
             url: sourcePortalItem.url,
-            title: `${ sourcePortalItem.title } - new scenario [${ (new Date()).valueOf() }]`,
-            snippet: `${ sourcePortalItem.snippet } - new scenario`,
-            description: `${ sourcePortalItem.description } - new scenario`,
+            title: `${ sourcePortalItem.title } - GDH Design [${ (new Date()).valueOf() }]`,
+            snippet: `${ sourcePortalItem.snippet } - GDH Design`,
+            description: `${ sourcePortalItem.description } - GDH Design`,
             accessInformation: sourcePortalItem.accessInformation,
             typeKeywords: sourcePortalItem.typeKeywords,
             tags: sourcePortalItem.tags.concat('gdhtest') // APPEND GDHTEST TAG JUST FOR TESTING THIS APP //
@@ -363,64 +380,67 @@ class DiagramReader extends EventTarget {
           // - PortalUser: https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html
           const portalUser = portal.user;
 
-          //
-          // https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html#addItem
-          //
-          // ADD NEW PORTAL ITEM FOR THE NEW SCENARIO TO THE PORTAL //
-          //  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html#addItem
-          portalUser.addItem({
-            item: newPortalItem
-          }).then(newScenarioPortalItem => {
-            console.info("NEW Scenario Portal Item: ", newScenarioPortalItem);
+          // FIND GEOPLANNER PROJECT FOLDER //
+          this._findGeoPlannerProjectFolder({portalUser, geoPlannerProjectID: projectKeyword}).then(({portalFolder}) => {
 
-            // SCENARIO ID IS SAME AS THE NEW PORTAL ITEM ID //
-            const scenarioID = newScenarioPortalItem.id;
-            // QUERY FILTER USED TO GET BACK SCENARIO SPECIFIC FEATURES //
-            const scenarioFilter = `(Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ scenarioID }')`;
+            // ADD ITEM PROPERTIES //
+            const addItemProps = {item: newPortalItem};
+            // IF USER HAS A MATCHING GEOPLANNER PROJECT FOLDER //
+            portalFolder && (addItemProps.folder = portalFolder.id);
 
             //
-            // SET NEW LAYER DEFINITION EXPRESSION //
+            // ADD NEW PORTAL ITEM FOR THE NEW SCENARIO TO THE PORTAL //
+            //  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html#addItem
             //
-            const updatedLayerPortalItemData = {...sourceLayerPortalItemData};
-            updatedLayerPortalItemData.layers[interventionLayerId].layerDefinition = {
-              definitionExpression: scenarioFilter
-            };
-            console.info("UPDATE to Scenario Portal Item Data", updatedLayerPortalItemData);
+            portalUser.addItem(addItemProps).then(newScenarioPortalItem => {
+              console.info("NEW Scenario Portal Item: ", newScenarioPortalItem);
 
-            // UPDATE ITEM DATA WITH NEW SUBLAYER DEFINITION
-            // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#update
-            newScenarioPortalItem.update({
-              data: updatedLayerPortalItemData
-            }).then((updatedScenarioPortalItem) => {
-              console.info("UPDATED Scenario Portal Item: ", updatedScenarioPortalItem);
+              // SCENARIO ID IS SAME AS THE NEW PORTAL ITEM ID //
+              const scenarioID = newScenarioPortalItem.id;
+              // QUERY FILTER USED TO GET BACK SCENARIO SPECIFIC FEATURES //
+              const scenarioFilter = `(Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ scenarioID }')`;
 
-              // VERIFY UPDATED SUBLAYER DEFINITION
-              // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#fetchData
-              updatedScenarioPortalItem.fetchData().then((updatedLayerPortalItemData) => {
-                console.info("UPDATED Scenario Portal Item Data: ", updatedLayerPortalItemData);
+              //
+              // SET NEW LAYER DEFINITION EXPRESSION //
+              //
+              const updatedLayerPortalItemData = {...sourceLayerPortalItemData};
+              updatedLayerPortalItemData.layers[interventionLayerId].layerDefinition = {
+                definitionExpression: scenarioFilter
+              };
+              console.info("UPDATE to Scenario Portal Item Data", updatedLayerPortalItemData);
 
-                //
-                // UPDATING PORTAL ITEM SHARING
-                //
-                // https://developers.arcgis.com/rest/users-groups-and-items/share-item-as-item-owner-.htm
-                //
+              // UPDATE ITEM DATA WITH NEW SUBLAYER DEFINITION
+              // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#update
+              newScenarioPortalItem.update({
+                data: updatedLayerPortalItemData
+              }).then((updatedScenarioPortalItem) => {
+                console.info("UPDATED Scenario Portal Item: ", updatedScenarioPortalItem);
 
-                // IGC SHARE GROUP ID //
-                const sharedToGroups = [];
+                // VERIFY UPDATED SUBLAYER DEFINITION
+                // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#fetchData
+                updatedScenarioPortalItem.fetchData().then((updatedLayerPortalItemData) => {
+                  console.info("UPDATED Scenario Portal Item Data: ", updatedLayerPortalItemData);
 
-                const portalItemShareUrl = `${ updatedScenarioPortalItem.userItemUrl }/share`;
-                esriRequest(portalItemShareUrl, {
-                  query: {
-                    everyone: false,
-                    org: true,
-                    groups: sharedToGroups.join(','),
-                    f: 'json'
-                  },
-                  method: 'post'
-                }).then((response) => {
+                  //
+                  // UPDATING PORTAL ITEM SHARING
+                  //
+                  // https://developers.arcgis.com/rest/users-groups-and-items/share-item-as-item-owner-.htm
+                  //
 
-                  resolve({portalItem: updatedScenarioPortalItem, scenarioID, scenarioFilter});
+                  const portalItemShareUrl = `${ updatedScenarioPortalItem.userItemUrl }/share`;
+                  esriRequest(portalItemShareUrl, {
+                    query: {
+                      everyone: false,
+                      org: true,
+                      groups: sourcePortalGroup.id,
+                      f: 'json'
+                    },
+                    method: 'post'
+                  }).then((response) => {
 
+                    resolve({portalItem: updatedScenarioPortalItem, scenarioID, scenarioFilter});
+
+                  }).catch(console.error);
                 }).catch(console.error);
               }).catch(console.error);
             }).catch(console.error);
@@ -520,12 +540,13 @@ class DiagramReader extends EventTarget {
         let _geoPlannerSourceScenarioFeatures;
         let _candidateFeatures;
 
-
         // FIND GEOPLANNER GROUPS //
         this._findGeoPlannerGroups({portal}).then(({geoPlannerGroups}) => {
           console.info("GeoPlanner Groups: ", geoPlannerGroups);
 
+          //
           // WHEN PORTAL GROUP IS SELECTED //
+          //
           this.addEventListener('portal-group-selected', ({detail: {portalGroup}}) => {
             // SOURCE GROUP //
             _geoPlannerSourceGroup = portalGroup;
@@ -533,8 +554,9 @@ class DiagramReader extends EventTarget {
             this._displayPortalItemsList({portalGroup}).then();
           });
 
-
+          //
           // WHEN PORTAL ITEM IS SELECTED //
+          //
           this.addEventListener('portal-item-selected', ({detail: {portalItem}}) => {
             // SOURCE PORTAL ITEM //
             _geoPlannerSourcePortalItem = portalItem;
@@ -575,7 +597,6 @@ class DiagramReader extends EventTarget {
               console.info("Diagrams by System as GeoJSON: ", diagramBySystemsGeoJSON);
 
             });
-
           });
 
           //
@@ -605,7 +626,12 @@ class DiagramReader extends EventTarget {
               // CREATE TARGET SCENARIO PORTAL ITEM //
               //  - THIS WILL GIVE US THE NECESSARY NEW SCENARIO ID...
               //
-              this._createNewGeoPlannerScenarioPortalItem({portal, sourcePortalItem: _geoPlannerSourcePortalItem, interventionLayerId}).then(({portalItem, scenarioID, scenarioFilter}) => {
+              this._createNewGeoPlannerScenarioPortalItem({
+                portal,
+                sourcePortalGroup: _geoPlannerSourceGroup,
+                sourcePortalItem: _geoPlannerSourcePortalItem,
+                interventionLayerId
+              }).then(({portalItem, scenarioID, scenarioFilter}) => {
 
                 // NEW SCENARIO FILTER //
                 geoplannerTargetItemDetails.innerHTML = scenarioFilter;
