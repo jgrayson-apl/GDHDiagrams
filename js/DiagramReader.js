@@ -173,11 +173,6 @@ class DiagramReader extends EventTarget {
   _displayPortalItemsList({portalGroup}) {
     return new Promise((resolve, reject) => {
 
-      //
-      // TODO: FIND IGC GROUP AND THEN ONLY LIST THE VALID
-      //       GEOPLANNER SCENARIOS FEATURELAYER PORTAL ITEMS...
-      //
-
       const portalItemsList = document.getElementById('geoplanner-items-list');
 
       /**

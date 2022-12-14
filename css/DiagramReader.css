@@ -127,6 +127,6 @@ pre {
 
 .geoplanner-list-item.selected {
   color: dodgerblue;
-  border-left-color: dodgerblue;
+  border-color: dodgerblue;
   background-color: #ffffff;
 }
