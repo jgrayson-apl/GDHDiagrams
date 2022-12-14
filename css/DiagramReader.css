@@ -88,11 +88,6 @@ pre {
   font-weight: 600;
 }
 
-.layer-item {
-  margin: 2px;
-  padding: 2px;
-}
-
 .diagram-item {
   margin: 2px;
   padding: 2px;
@@ -115,4 +110,23 @@ pre {
   padding: 10px;
   margin: 5px;
   font-size: larger;
+}
+
+.geoplanner-list-item {
+  cursor: pointer;
+  margin: 2px;
+  padding: 2px 2px 2px 10px;
+  border: solid 1px transparent;
+  border-left: solid 4px #666666;
+}
+
+.geoplanner-list-item:hover {
+  color: dodgerblue;
+  border-left-color: dodgerblue;
+}
+
+.geoplanner-list-item.selected {
+  color: dodgerblue;
+  border-left-color: dodgerblue;
+  background-color: #ffffff;
 }
