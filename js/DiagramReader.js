@@ -35,7 +35,7 @@ class DiagramReader extends EventTarget {
     }
 
     // INITIALIZE PORTAL //
-    this.initializeApplication().then(({portal}) => {
+    this.authenticateArcGISOnline().then(({portal}) => {
 
       // SIGNED-IN USER LABEL //
       const signInUserLabel = document.getElementById('sign-in-user-label');
@@ -63,7 +63,7 @@ class DiagramReader extends EventTarget {
    *
    * @returns {Promise<Portal>}
    */
-  initializeApplication() {
+  authenticateArcGISOnline() {
     return new Promise((resolve, reject) => {
       require([
         'esri/identity/IdentityManager',
@@ -599,7 +599,6 @@ class DiagramReader extends EventTarget {
           //
           // CREATE A LIST OF RANDOM CANDIDATE FEATURES //
           //
-
           getRandomCandidatesBtn.addEventListener('click', () => {
             if (_geoPlannerSourceScenarioFeatures) {
               // CANDIDATE GEOPLANNER SCENARIO FEATURES //
@@ -649,6 +648,7 @@ class DiagramReader extends EventTarget {
 
                   // DISPLAY LIST OF NEW SCENARIO FEATURE OIDS //
                   gdhScenarioList.innerHTML = `Add Feature Results (${ addFeaturesOIDs.length } of ${ sourceFeatureCount })`;
+                  gdhScenarioList.innerHTML += '<br><br>';
                   gdhScenarioList.innerHTML += addFeaturesOIDs.map(oid => `OID: ${ oid }`).join('<br>');
 
                 });
