@@ -145,7 +145,7 @@ const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPol
         "Authorization": `Token ${ apiToken }`,
         "content-type": "application/json"
       },
-      json: json
+      json: postJson
     });
 
 };

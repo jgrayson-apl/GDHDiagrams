@@ -148,7 +148,6 @@ class DiagramReader extends EventTarget {
 
   /**
    *
-   * TODO: FIGURE OUT RIGHT WAY TO FIND GEOPLANNER PROJECT FOLDER...
    *
    * @param {PortalUser} portalUser
    * @param {string} geoPlannerProjectID
@@ -159,10 +158,8 @@ class DiagramReader extends EventTarget {
     return new Promise((resolve, reject) => {
       portalUser.fetchFolders().then((userFolders) => {
 
-        //
-        // TODO: FIGURE OUT RIGHT WAY TO FIND GEOPLANNER PROJECT FOLDER...
-        //
-        const geoPlannerFolder = userFolders.find(folder => folder.title === geoPlannerProjectID);
+        const geoPlannerFolderName = `_ Geoplanner ${geoPlannerProjectID}`;
+        const geoPlannerFolder = userFolders.find(folder => folder.title === geoPlannerFolderName);
 
         resolve({portalFolder: geoPlannerFolder});
       }).catch(reject);
@@ -387,7 +384,7 @@ class DiagramReader extends EventTarget {
           const portalUser = portal.user;
 
           // FIND GEOPLANNER PROJECT FOLDER //
-          this._findGeoPlannerProjectFolder({portalUser, geoPlannerProjectID: projectKeyword}).then(({portalFolder}) => {
+          this._findGeoPlannerProjectFolder({portalUser, geoPlannerProjectID: projectID}).then(({portalFolder}) => {
 
             // ADD ITEM PROPERTIES //
             const addItemProps = {item: newPortalItem};
