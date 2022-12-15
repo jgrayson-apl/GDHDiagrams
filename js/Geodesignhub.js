@@ -61,7 +61,6 @@ const fetchResource = (path, userOptions = {}) => {
 
     // Variable which will be used for storing response
     let response = null;
-    console.log(options);
     return fetch(url, options).
         then(responseObject => {
             // Saving response for later use in lower scopes
@@ -130,9 +129,29 @@ const gdhVerifyProjectCredentials = (projectID, apiToken) => {
         });
 };
 
-const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPolicy, geoJson) => {
+const gdhVerifyProjectSystems = (projectID, apiToken) => {
+    return fetchResource(`projects/${projectID}/systems/`,
+        {
+            method: 'GET',
+            headers: {
+                "Authorization": `Token ${apiToken}`,
+            },
+        });
+};
+
+const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPolicy, postJson) => {
     // return fetchResource(`/${projectID}/`, {'Authorization': "Token " + apiToken });
     console.log("Not implemented yet..");
+    return fetchResource(`projects/${projectID}/systems/${systemID}/add/${projectOrPolicy}`,
+        {
+            method: 'POST',
+            headers: {
+                "Authorization": `Token ${apiToken}`,
+                "content-type": "application/json"
+            },
+            json: json
+        });
+
 };
 
 
@@ -143,7 +162,7 @@ const consoleElement = document.querySelector('#gdh-console');
 const verifyCredenditalsBtn = document.querySelector('#verify-gdh-creds-btn');
 const migrateDiagramsBtn = document.querySelector('#migrate-diagrams-gdh-btn');
 
-// Create "actions"
+
 
 function verifyCredentials() {
     // Save button text and set it to loading
@@ -158,23 +177,58 @@ function verifyCredentials() {
     var validated = 0;
     if (gdhApiToken_cont && gdhApiToken_cont.value && gdhProjectID_cont && gdhProjectID_cont.value) {
         validated = 1;
-        gdhApiToken = gdhApiToken_cont.value
-        gdhProjectID = gdhProjectID_cont.value
+        gdhApiToken = gdhApiToken_cont.value;
+        gdhProjectID = gdhProjectID_cont.value;
 
     } else {
         consoleElement.innerHTML = "Please provide a valid API Token and Project ID";
     }
     if (validated) {
+        // Check if the API token and the project works (the user has access to the project and the project is of the right tpype)
         gdhVerifyProjectCredentials(gdhProjectID, gdhApiToken).
             then(data => {
-                consoleElement.innerHTML = `<div>${JSON.stringify(data, null, 2)}</div>${consoleElement.innerHTML}`;
-                // Reset button text
-                this.innerHTML = buttonText;
-                
-                                
-                if(migrateDiagramsBtn.classList.contains('hide')) {
-                    // remove the class
-                    migrateDiagramsBtn.classList.remove('hide');
+                if (data.external_connection !== 'esri') {
+                    consoleElement.innerHTML = `<div>${JSON.stringify(data, null, 2)}</div>${consoleElement.innerHTML}<br>The project is not a ESRI workspace project in Geodesignhub, we cannot migrate data at this time.`;
+                    // Reset button text
+                    this.innerHTML = buttonText;
+
+                } else {
+                    gdhVerifyProjectSystems(gdhProjectID, gdhApiToken).
+                        then(systemsData => {
+                            const validSystemColors = [{ 'name': 'ENE', 'color': "#AB507E" }, { 'name': 'AG', 'color': "#D9CD91" }, { 'name': 'FOR', 'color': "#80BD75" }, { 'name': 'OCN', 'color': "#8CCDD1" }, { 'name': 'STL', 'color': "#E6564E" }, { 'name': 'IND', 'color': "#916DA3" }, { 'name': 'TRAN', 'color': "#706666" }, { 'name': 'WAT', 'color': "#6B9CB0" },];
+                            let allSysNameColorsFound = [];
+                            for (let x1 = 0; x1 < validSystemColors.length; x1++) {
+                                const currentSystemToCheck = validSystemColors[x1];
+                                const exists = systemsData.filter(function (singleSystem) {
+                                    return singleSystem.sysname === currentSystemToCheck['name'] && singleSystem.syscolor === currentSystemToCheck['color'];
+                                });
+                                if (exists) {
+                                    allSysNameColorsFound.push(1);
+                                } else {
+                                    allSysNameColorsFound.push(0);
+                                }
+                            }
+
+                            const isAllOne = allSysNameColorsFound.every(item => item === 1);
+                            if (isAllOne) {
+                                consoleElement.innerHTML = `<div>Project successfully verified, ready for data migration..</div>${consoleElement.innerHTML}`;
+                                // Reset button text
+                                this.innerHTML = buttonText;
+                                if (migrateDiagramsBtn.classList.contains('hide')) {                        // remove the class
+                                    migrateDiagramsBtn.classList.remove('hide');
+                                }
+                            }
+                            else {
+
+                                consoleElement.innerHTML = "Geodesignhub project is not setup correctly, please contact your administrator";
+                            }
+                        }).
+                        catch(error => {
+                            consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
+
+                            this.innerHTML = buttonText;
+                            // Reset button text      
+                        });
                 }
             }).
             catch(error => {
@@ -190,7 +244,7 @@ function verifyCredentials() {
 function migrateIGCDiagrams() {
     // Save button text and set it to loading
     const buttonText = this.innerHTML;
-    this.innerHTML = 'Loading...';
+    this.innerHTML = 'Processing...';
     consoleElement.innerHTML = '';
     const gdhApiToken = document.getElementById("gdh-api-token").value;
     const gdhProjectID = document.getElementById("gdh-project-id").value;
@@ -198,9 +252,14 @@ function migrateIGCDiagrams() {
 
     gdhMigrateDiagramsToProject(gdhProjectID, gdhApiToken).
         then(data => {
+            console.log(data);
             consoleElement.innerHTML = `<div>${JSON.stringify(data, null, 2)}</div>${consoleElement.innerHTML}`;
             // Reset button text
             this.innerHTML = buttonText;
+
+            // var json = { "featuretype": "polygon", "description": diagname, "geometry": gj, "fundingtype":fundingtype };
+
+
         }).
         catch(error => {
             consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
