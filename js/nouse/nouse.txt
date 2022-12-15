@@ -197,3 +197,87 @@
            evt.item.layer.blendMode = evt.action.value ? 'multiply' : 'normal';
            }
            });*/
+
+ /**
+ * based on: https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+ *
+ * @returns {string}
+ */
+function _uuid() {
+  const url = URL.createObjectURL(new Blob());
+  const [id] = url.toString().split('/').reverse();
+  URL.revokeObjectURL(url);
+  return id.replace(/-/g, '');
+}
+
+ /**
+ * GET DIAGRAM COLOR BASED ON CURRENT RENDERER
+ *
+ * @param diagramAttributes
+ * @returns {Promise<unknown>}
+ * @private
+ */
+/*const _getDiagramColor = ({diagramAttributes}) => {
+ return new Promise((resolve, reject) => {
+ symbolUtils.getDisplayedColor({attributes: diagramAttributes}, {renderer: interventionsLayer.renderer}).then((color) => {
+ resolve({color});
+ });
+ });
+ };*/
+
+ // GET COLOR USED IN GEOPLANNER FOR THIS FEATURE //
+ // _getDiagramColor({diagramAttributes: diagramAttributes}).then(({color}) => {
+ //   diagramItem.style.borderLeftColor = color.toCss();
+ // });
+
+ //
+ // GET THE LAYER FROM THE PORTAL ITEM //
+ //
+ // - THIS WILL INSTANTIATE A FEATURE LAYER BASED ON THE PORTAL ITEM
+ // Layer.fromPortalItem(firstLayerPortalItem).then((layer) => {
+ // THE GEOPLANNER LAYER ITEM REFERENCES A FEATURE LAYER WITH MULTIPLE SUBLAYERS
+ // SO WE GET BACK A GROUP LAYER WITH TWO FEATURE LAYERS
+ // AND WE THEN MAKE SURE ALL SUB LAYERS ARE LOADED...
+ // layer.loadAll().then(() => {
+
+ // INTERVENTIONS LAYER //
+ //  - hardocded to find a layer with a title that includes 'interventions'...
+ //  - TODO: FIND BETTER WAY TO HANDLE THIS...
+ // const interventionsLayer = layer.layers.find(l => l.title.toLowerCase().includes('interventions'));
+
+ // DISPLAY FILTER USED OF THE GEOPLANNER DESIGN LAYER //
+ // - THIS WILL SHOW THE DEFAULT QUERY USED FOR THIS LAYER
+ //   AND SHOWS THE ID OF THE GEOPLANNER PROJECT AND DESIGN
+ // geoplannerSourceItemDetails.innerHTML = interventionsLayer.definitionExpression;
+
+ //
+ //  IMPORTANT: createQuery() WILL USE THE LAYER DEFINITION EXPRESSION WHICH PROVIDES A SCENARIO SPECIFIC FILTER
+ //    - WE WANT THE GEOMETRY AND ALL THE FIELDS SO WE CAN REPLICATE THEM WHEN ADDING AS NEW DESIGN/PLAN...
+ //
+ // const analysisQuery = interventionsLayer.createQuery();
+
+ // DIAGRAMS FILTER //
+ //  - IN ADDITION TO THE DEFAULT FILTER WE ALSO IGNORE ANY FEATURE WITHOUT AN INTERVENTION
+ //  - NOTE: ALSO USED WHEN RETRIEVING THE GEOJSON FEATURES...
+ // const diagramsFilter = `${ analysisQuery.where } AND (Intervention_System <> 'NA')`;  // TODO: REPLACE 'NA' WITH NULL VALUES?
+
+ // SET ANALYSIS QUERY PARAMETERS //
+ //  - UPDATE THE WHERE CLAUSE TO ONLY INCLUDE FEATURES WITH AN INTERVENTION
+ /*analysisQuery.set({
+  where: diagramsFilter,
+  outFields: ['*'],
+  returnGeometry: true
+  });*/
+
+//
+// GET THE FEATURES FROM THE FEATURE LAYER //
+// BREAK DOWN THE LIST OF FEATURES BY SYSTEM TO PRODUCE A LIST OF DIAGRAMS
+//
+// interventionsLayer.queryFeatures(analysisQuery).then(analysisFS => {
+//   console.info("Esri JSON features via queryFeatures(): ", analysisFS);
+
+//
+// DIAGRAM FEATURES ORGANIZED BY SYSTEM //
+//
+// const diagramBySystems = _displayFeaturesList(gdhFeaturesList, analysisFS.features);
+// console.info("Diagrams by System as Esri JSON: ", diagramBySystems);

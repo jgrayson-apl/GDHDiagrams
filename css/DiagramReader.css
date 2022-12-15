@@ -5,9 +5,11 @@
   border: solid 1px #cccccc;
   overflow: hidden;
 }
+
 .hide {
   display: none;
 }
+
 .pane.collapsed > .pane-section {
   display: none;
 }
@@ -26,6 +28,7 @@
   border: solid 1px #cccccc;
   background-color: #efefef;
 }
+
 /* Source: https://www.w3schools.com/css/css_form.asp */
 input[type='text'] {
   width: 100%;
@@ -38,13 +41,14 @@ input[type='text'] {
   background-repeat: no-repeat;
   padding: 6px 10px 6px 20px;
 }
+
 /* Source: https://css-tricks.com/considerations-styling-pre-tag/ */
 pre {
   white-space: pre-wrap;
   overflow-x: auto;
   background-color: #ccc;
   max-width: 50%;
-  
+
 }
 
 .pane .toggle:before {
@@ -76,13 +80,12 @@ pre {
   font-weight: 600;
 }
 
-.pane-label {
-  font-weight: 600;
+.pane-links {
+  margin: 10px 0;
 }
 
-.layer-item {
-  margin: 2px;
-  padding: 2px;
+.pane-label {
+  font-weight: 600;
 }
 
 .diagram-item {
@@ -107,4 +110,23 @@ pre {
   padding: 10px;
   margin: 5px;
   font-size: larger;
+}
+
+.geoplanner-list-item {
+  cursor: pointer;
+  margin: 2px;
+  padding: 2px 2px 2px 10px;
+  border: solid 1px transparent;
+  border-left: solid 4px #666666;
+}
+
+.geoplanner-list-item:hover {
+  color: dodgerblue;
+  border-left-color: dodgerblue;
+}
+
+.geoplanner-list-item.selected {
+  color: dodgerblue;
+  border-color: dodgerblue;
+  background-color: #ffffff;
 }
