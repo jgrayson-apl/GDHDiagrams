@@ -23,6 +23,7 @@ diagramReader.initialize().then(({portal}) => {
 
   diagramReader.addEventListener('geoplanner-features', ({detail: {sourceScenarioFeaturesGeoJSON}}) => {
     console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
+
     //
     // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
     // BASED ON THE SYSTEM, PROJECT/POLICY, ETC... WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN
@@ -30,17 +31,37 @@ diagramReader.initialize().then(({portal}) => {
     //
     const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(sourceScenarioFeaturesGeoJSON);
 
-    //
-    // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
-    //
-    this.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
-      console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs, diagramReader);
+    // TESTING: DON'T TRANSFER ALL FEATURES OVER...
+    const ignoreUpdate = true;
+    if (!ignoreUpdate) {
+      //
+      // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
+      //
+      this.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
+        console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs, diagramReader);
 
-    });
-
+      });
+    }
   });
 
 });
+
+/**
+ *
+ * *** DO NOT USE ***
+ *  NOTE: JUST A DUMMY METHOD SO NO ERRORS ARE NOT THROWN
+ *
+ * @param {{}[]} features
+ * @returns {Graphic[]}
+ */
+function negotiate_in_geodesign_hub(features) {
+  return features.map(feature => {
+    return {
+      attributes: {...feature.properties},
+      geometry: Terraformer.geojsonToArcGIS(feature.geometry)
+    };
+  });
+}
 
 // TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:9000/api/v1';
