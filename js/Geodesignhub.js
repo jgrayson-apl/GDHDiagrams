@@ -3,6 +3,45 @@
 // https://muffinman.io/simple-javascript-api-wrapper
 // ------------------------------------------------------ //
 
+/**
+ * DIAGRAM READER
+ */
+import DiagramReader from './DiagramReader.js';
+
+// NEW INSTANCE OF DIAGRAM READER //
+const diagramReader = new DiagramReader();
+diagramReader.initialize().then(({portal}) => {
+  console.info('DiagramReader::initialize', portal, diagramReader);
+
+  diagramReader.addEventListener('portal-group-selected', ({detail: {portalGroup}}) => {
+    console.info('DiagramReader:::portal-group-selected', portalGroup, diagramReader);
+  });
+
+  diagramReader.addEventListener('portal-item-selected', ({detail: {portalItem}}) => {
+    console.info('DiagramReader:::portal-item-selected', portalItem, diagramReader);
+  });
+
+  diagramReader.addEventListener('geoplanner-features', ({detail: {sourceScenarioFeaturesGeoJSON}}) => {
+    console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
+    //
+    // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
+    // BASED ON THE SYSTEM, PROJECT/POLICY, ETC... WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN
+    // SOURCE SCENARIO FEATURES
+    //
+    const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(sourceScenarioFeaturesGeoJSON);
+
+    //
+    // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
+    //
+    this.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
+      console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs, diagramReader);
+
+    });
+
+  });
+
+});
+
 // TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:9000/api/v1';
 
