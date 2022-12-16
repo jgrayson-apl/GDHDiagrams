@@ -161,7 +161,7 @@ class DiagramReader extends EventTarget {
         sortOrder: 'desc',
         num: 100
       }).then(({results}) => {
-        console.info(results);
+        //console.info(results);
 
         const groupListItems = results.map(geoPlannerGroup => {
           const groupListItem = document.createElement('div');
@@ -391,8 +391,8 @@ class DiagramReader extends EventTarget {
         // GET PORTAL ITEM DATA //
         //  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#fetchData
         this.sourcePortalItem.fetchData().then((sourceLayerPortalItemData) => {
-          console.info("SOURCE Scenario Portal Item: ", this.sourcePortalItem);
-          console.info("SOURCE Scenario Portal Item Data: ", sourceLayerPortalItemData);
+          //console.info("SOURCE Scenario Portal Item: ", this.sourcePortalItem);
+          //console.info("SOURCE Scenario Portal Item Data: ", sourceLayerPortalItemData);
 
           //
           // HERE WE COULD USE THE NAME OF THE DESIGN FROM GDH AS THE TITLE
@@ -434,7 +434,7 @@ class DiagramReader extends EventTarget {
             //  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalUser.html#addItem
             //
             portalUser.addItem(addItemProps).then(newScenarioPortalItem => {
-              console.info("NEW Scenario Portal Item: ", newScenarioPortalItem);
+              //console.info("NEW Scenario Portal Item: ", newScenarioPortalItem);
 
               // SCENARIO ID IS SAME AS THE NEW PORTAL ITEM ID //
               const scenarioID = newScenarioPortalItem.id;
@@ -448,19 +448,19 @@ class DiagramReader extends EventTarget {
               updatedLayerPortalItemData.layers[this.interventionLayerId].layerDefinition = {
                 definitionExpression: scenarioFilter
               };
-              console.info("UPDATE to Scenario Portal Item Data", updatedLayerPortalItemData);
+              //console.info("UPDATE to Scenario Portal Item Data", updatedLayerPortalItemData);
 
               // UPDATE ITEM DATA WITH NEW SUBLAYER DEFINITION
               // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#update
               newScenarioPortalItem.update({
                 data: updatedLayerPortalItemData
               }).then((updatedScenarioPortalItem) => {
-                console.info("UPDATED Scenario Portal Item: ", updatedScenarioPortalItem);
+                //console.info("UPDATED Scenario Portal Item: ", updatedScenarioPortalItem);
 
                 // VERIFY UPDATED SUBLAYER DEFINITION
                 // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#fetchData
                 updatedScenarioPortalItem.fetchData().then((updatedLayerPortalItemData) => {
-                  console.info("UPDATED Scenario Portal Item Data: ", updatedLayerPortalItemData);
+                  //console.info("UPDATED Scenario Portal Item Data: ", updatedLayerPortalItemData);
 
                   //
                   // UPDATING PORTAL ITEM SHARING
@@ -553,7 +553,7 @@ class DiagramReader extends EventTarget {
 
         // ADD NEW GEOPLANNER SCENARIO FEATURES //
         this._addNewGeoPlannerScenarioFeatures({designFeaturesAsEsriJSON: updatedDesignFeaturesAsEsriJSON, newPortalItem}).then(({addFeaturesOIDs}) => {
-          console.info('New GeoPlanner Scenario Features: ', addFeaturesOIDs);
+          //console.info('New GeoPlanner Scenario Features: ', addFeaturesOIDs);
 
           resolve({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs});
         }).catch(reject);
@@ -586,7 +586,7 @@ class DiagramReader extends EventTarget {
 
           // FIND GEOPLANNER GROUPS //
           this._findGeoPlannerGroups({portal}).then(({geoPlannerGroups}) => {
-            console.info("GeoPlanner Groups: ", geoPlannerGroups);
+            //console.info("GeoPlanner Groups: ", geoPlannerGroups);
 
             //
             // WHEN PORTAL GROUP IS SELECTED //
@@ -629,7 +629,7 @@ class DiagramReader extends EventTarget {
                 }
               }).then((response) => {
                 const {features} = response.data;
-                console.info("GeoJSON features via esriRequest(): ", features);
+                //console.info("GeoJSON features via esriRequest(): ", features);
 
                 // GEOPLANNER SOURCE SCENARIO FEATURES //
                 this.sourceScenarioFeaturesGeoJSON = features;
@@ -640,7 +640,7 @@ class DiagramReader extends EventTarget {
                 // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
                 //
                 const diagramBySystemsGeoJSON = this._displayFeaturesList(gdhDiagramsList, this.sourceScenarioFeaturesGeoJSON, true);
-                console.info("Diagrams by System as GeoJSON: ", diagramBySystemsGeoJSON);
+                //console.info("Diagrams by System as GeoJSON: ", diagramBySystemsGeoJSON);
 
               });
             });
@@ -652,10 +652,10 @@ class DiagramReader extends EventTarget {
               if (this.sourceScenarioFeaturesGeoJSON) {
                 // CANDIDATE GEOPLANNER SCENARIO FEATURES //
                 _candidateFeatures = this._createRandomScenarioCandidates(this.sourceScenarioFeaturesGeoJSON);
-                console.info('Random Candidate Features: ', _candidateFeatures);
+                //console.info('Random Candidate Features: ', _candidateFeatures);
 
                 const diagramBySystemsCandidates = this._displayFeaturesList(gdhCandidatesList, _candidateFeatures, true);
-                console.info("Diagrams by System for Candidate Features: ", diagramBySystemsCandidates);
+                //console.info("Diagrams by System for Candidate Features: ", diagramBySystemsCandidates);
               } else {
                 alert('No Scenario Portal Item selected...');
               }
