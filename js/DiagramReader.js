@@ -90,7 +90,9 @@ class DiagramReader extends EventTarget {
     return new Promise((resolve, reject) => {
       require(['esri/request'], (esriRequest) => {
 
+        //
         // AUTHENTICATE AND INITIALIZE PORTAL //
+        //
         this.authenticateArcGISOnline().then(({portal}) => {
 
           // PORTAL //
@@ -99,11 +101,9 @@ class DiagramReader extends EventTarget {
           // UI STUFF //
           this.diagramReaderUI.portalUser = this.portal.user;
 
-          // SIGNED-IN USER LABEL //
-          // const signInUserLabel = document.getElementById('sign-in-user-label');
-          // signInUserLabel.innerHTML = portal.user?.username || '[ not signed in ]';
-
+          //
           // FIND GEOPLANNER GROUPS //
+          //
           this._findGeoPlannerGroups({portal}).then(() => {
 
             //
@@ -113,8 +113,8 @@ class DiagramReader extends EventTarget {
             this.diagramReaderUI.addEventListener('portal-group-selected', ({detail: {portalGroup}}) => {
               // SOURCE GROUP //
               this.sourcePortalGroup = portalGroup;
-              // DISPLAY LIST OF IGC FEATURE LAYER PORTAL ITEMS //
-              this._displayPortalItemsList({portalGroup}).then();
+              // GET LIST OF IGC FEATURE LAYER PORTAL ITEMS //
+              this._getPortalItemsList({portalGroup}).then();
             });
 
             //
@@ -276,7 +276,7 @@ class DiagramReader extends EventTarget {
    * @returns {Promise<PortalItem[]>}
    * @private
    */
-  _displayPortalItemsList({portalGroup}) {
+  _getPortalItemsList({portalGroup}) {
     return new Promise((resolve, reject) => {
 
       /**
@@ -305,39 +305,35 @@ class DiagramReader extends EventTarget {
     });
   }
 
+
   /**
-   * THESE ARE UPDATES THAT WILL HAVE TO BE MADE TO ALL SCENARIO FEATURES BEFORE
-   * ADDING THEM BACK TO THE FEATURE LAYER
    *
-   *
-   * @param {{}[]} candidateFeatures array of features (GeoJSON or Esri JSON)
-   * @param {string} scenarioID
-   * @returns {Graphic[]}
+   * @param {Graphic[]} designFeaturesAsEsriJSON
+   * @returns {Promise<{newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}>}
    */
-  _updateScenarioCandidates(candidateFeatures, scenarioID) {
+  createNewGeoPlannerScenario({designFeaturesAsEsriJSON}) {
+    return new Promise((resolve, reject) => {
 
-    // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
-    return candidateFeatures.map(diagramFeature => {
+      //
+      // CREATE TARGET SCENARIO PORTAL ITEM //
+      //  - THIS WILL GIVE US THE NECESSARY NEW SCENARIO ID...
+      //
+      this._createNewGeoPlannerScenarioPortalItem().then(({newPortalItem, scenarioID, scenarioFilter}) => {
 
-      // DIAGRAM ATTRIBUTES //
-      const diagramAttributes = diagramFeature.properties || diagramFeature.attributes;
+        // UPDATE NEW SCENARIO FEATURES //
+        //
+        // - TODO: THESE MODIFICATIONS WILL HAVE TO HAPPEN AND WILL CHANGE AS WE MOVE THE PROJECT FORWARD...
+        //
+        const updatedDesignFeaturesAsEsriJSON = this._updateScenarioCandidates(designFeaturesAsEsriJSON, scenarioID);
 
-      // ASSIGN NEW GEOPLANNER SCENARIO ID //
-      diagramAttributes.Geodesign_ScenarioID = scenarioID;
+        // ADD NEW GEOPLANNER SCENARIO FEATURES //
+        this._addNewGeoPlannerScenarioFeatures({designFeaturesAsEsriJSON: updatedDesignFeaturesAsEsriJSON, newPortalItem}).then(({addFeaturesOIDs}) => {
+          //console.info('New GeoPlanner Scenario Features: ', addFeaturesOIDs);
 
-      // ...WHEN AVAILABLE WE'LL MAINTAIN THE OBJECTID IN SOME OTHER FIELD... //
-      //diagramAttributes.SOURCEID = diagramAttributes.OBJECTID;
-
-      // DELETE SYSTEM FIELDS //
-      delete diagramAttributes.Shape__Area;
-      delete diagramAttributes.Shape__Length;
-      // - NEW OBJECTID AND GLOBALID WILL BE ASSIGNED BY FEATURE LAYER WHEN ADDED //
-      delete diagramAttributes.OBJECTID;
-      delete diagramAttributes.GLOBALID;
-
-      return diagramFeature;
+          resolve({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs});
+        }).catch(reject);
+      }).catch(reject);
     });
-
   }
 
   /**
@@ -456,6 +452,41 @@ class DiagramReader extends EventTarget {
   }
 
   /**
+   * THESE ARE UPDATES THAT WILL HAVE TO BE MADE TO ALL SCENARIO FEATURES BEFORE
+   * ADDING THEM BACK TO THE FEATURE LAYER
+   *
+   *
+   * @param {{}[]} candidateFeatures array of features (GeoJSON or Esri JSON)
+   * @param {string} scenarioID
+   * @returns {Graphic[]}
+   */
+  _updateScenarioCandidates(candidateFeatures, scenarioID) {
+
+    // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
+    return candidateFeatures.map(diagramFeature => {
+
+      // DIAGRAM ATTRIBUTES //
+      const diagramAttributes = diagramFeature.properties || diagramFeature.attributes;
+
+      // ASSIGN NEW GEOPLANNER SCENARIO ID //
+      diagramAttributes.Geodesign_ScenarioID = scenarioID;
+
+      // ...WHEN AVAILABLE WE'LL MAINTAIN THE OBJECTID IN SOME OTHER FIELD... //
+      //diagramAttributes.SOURCEID = diagramAttributes.OBJECTID;
+
+      // DELETE SYSTEM FIELDS //
+      delete diagramAttributes.Shape__Area;
+      delete diagramAttributes.Shape__Length;
+      // - NEW OBJECTID AND GLOBALID WILL BE ASSIGNED BY FEATURE LAYER WHEN ADDED //
+      delete diagramAttributes.OBJECTID;
+      delete diagramAttributes.GLOBALID;
+
+      return diagramFeature;
+    });
+
+  }
+
+  /**
    *
    * ADD THE CANDIDATE FEATURES TO THE GEOPLANNER PROJECT AS A NEW SCENARIO
    *
@@ -491,36 +522,6 @@ class DiagramReader extends EventTarget {
           resolve({addFeaturesOIDs});
         }).catch(reject);
       });
-    });
-  }
-
-  /**
-   *
-   * @param {Graphic[]} designFeaturesAsEsriJSON
-   * @returns {Promise<{newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}>}
-   */
-  createNewGeoPlannerScenario({designFeaturesAsEsriJSON}) {
-    return new Promise((resolve, reject) => {
-
-      //
-      // CREATE TARGET SCENARIO PORTAL ITEM //
-      //  - THIS WILL GIVE US THE NECESSARY NEW SCENARIO ID...
-      //
-      this._createNewGeoPlannerScenarioPortalItem().then(({newPortalItem, scenarioID, scenarioFilter}) => {
-
-        // UPDATE NEW SCENARIO FEATURES //
-        //
-        // - TODO: THESE MODIFICATIONS WILL HAVE TO HAPPEN AND WILL CHANGE AS WE MOVE THE PROJECT FORWARD...
-        //
-        const updatedDesignFeaturesAsEsriJSON = this._updateScenarioCandidates(designFeaturesAsEsriJSON, scenarioID);
-
-        // ADD NEW GEOPLANNER SCENARIO FEATURES //
-        this._addNewGeoPlannerScenarioFeatures({designFeaturesAsEsriJSON: updatedDesignFeaturesAsEsriJSON, newPortalItem}).then(({addFeaturesOIDs}) => {
-          //console.info('New GeoPlanner Scenario Features: ', addFeaturesOIDs);
-
-          resolve({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs});
-        }).catch(reject);
-      }).catch(reject);
     });
   }
 
