@@ -14,6 +14,8 @@
  limitations under the License.
  */
 
+import DiagramReaderUI from './DiagramReaderUI.js';
+
 class DiagramReader extends EventTarget {
 
   static CONFIG = {
@@ -22,20 +24,30 @@ class DiagramReader extends EventTarget {
   };
 
   /**
+   * @type {DiagramReaderUI}
+   */
+  diagramReaderUI;
+
+  /**
    * @type {Portal}
-   *
-   * Portal: https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-Portal.html
+   *  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-Portal.html
    *
    */
   portal;
 
   /**
    * @type {PortalGroup}
+   *  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalGroup.html
+   *
+   * GeoPlanner Project Online Portal Group
    */
   sourcePortalGroup;
 
   /**
    * @type {PortalItem}
+   *  - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html
+   *
+   * GeoPlanner source Scenario FeatureLayer Portal Item
    */
   sourcePortalItem;
 
@@ -47,7 +59,7 @@ class DiagramReader extends EventTarget {
   interventionLayerId = 0;
 
   /**
-   * @type {[]} array of GeoJSON features
+   * @type {{}[]} source GeoPlanner Scenario as array of GeoJSON features
    *
    */
   sourceScenarioFeaturesGeoJSON;
@@ -57,6 +69,8 @@ class DiagramReader extends EventTarget {
    */
   constructor() {
     super();
+
+    this.diagramReaderUI = new DiagramReaderUI();
 
     // TOGGLE PANE SECTIONS //
     document.querySelectorAll('.pane').forEach(paneNode => {
@@ -74,22 +88,89 @@ class DiagramReader extends EventTarget {
    */
   initialize() {
     return new Promise((resolve, reject) => {
+      require(['esri/request'], (esriRequest) => {
 
-      // AUTHENTICATE AND INITIALIZE PORTAL //
-      this.authenticateArcGISOnline().then(({portal}) => {
+        // AUTHENTICATE AND INITIALIZE PORTAL //
+        this.authenticateArcGISOnline().then(({portal}) => {
 
-        // PORTAL //
-        this.portal = portal;
+          // PORTAL //
+          this.portal = portal;
 
-        // SIGNED-IN USER LABEL //
-        const signInUserLabel = document.getElementById('sign-in-user-label');
-        signInUserLabel.innerHTML = portal.user?.username || '[ not signed in ]';
+          // UI STUFF //
+          this.diagramReaderUI.portalUser = this.portal.user;
 
-        // FIND ALL IGC GEOPLANNER LAYERS AND SELECT THE FIRST ONE //
-        this.initializeGeoPlannerLayers({portal}).then(() => {
-          resolve({portal});
+          // SIGNED-IN USER LABEL //
+          // const signInUserLabel = document.getElementById('sign-in-user-label');
+          // signInUserLabel.innerHTML = portal.user?.username || '[ not signed in ]';
+
+          // FIND GEOPLANNER GROUPS //
+          this._findGeoPlannerGroups({portal}).then(() => {
+
+            //
+            // WHEN PORTAL GROUP IS SELECTED //
+            // UI STUFF //
+            //
+            this.diagramReaderUI.addEventListener('portal-group-selected', ({detail: {portalGroup}}) => {
+              // SOURCE GROUP //
+              this.sourcePortalGroup = portalGroup;
+              // DISPLAY LIST OF IGC FEATURE LAYER PORTAL ITEMS //
+              this._displayPortalItemsList({portalGroup}).then();
+            });
+
+            //
+            // WHEN PORTAL ITEM IS SELECTED //
+            // UI STUFF //
+            //
+            this.diagramReaderUI.addEventListener('portal-item-selected', ({detail: {portalItem}}) => {
+              // SOURCE PORTAL ITEM //
+              this.sourcePortalItem = portalItem;
+
+              // GET RPOJECT ID FROM TYPEKEYWORD //
+              const projectIDkeyword = this.sourcePortalItem.typeKeywords.find(keyword => keyword.startsWith('geodesignProjectID'));
+              const projectID = projectIDkeyword.replace(/geodesignProjectID/, '');
+
+              // SOURCE SCENARIO FILTER //
+              const sourceScenarioID = this.sourcePortalItem.id;
+              const sourceScenarioFilter = `(Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ sourceScenarioID }')`;
+
+              // UI STUFF //
+              this.diagramReaderUI.sourceScenarioFilter = sourceScenarioFilter;
+
+              //
+              // GET THE FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
+              //  - esri/request IS A GENERIC METHOD TO MAKE DIRECT WEB CALLS BUT WILL HANDLE ESRI SPECIFIC USE-CASES
+              //      DOC: https://developers.arcgis.com/javascript/latest/api-reference/esri-request.html
+              //  - HERE WE USE IT TO MAKE A DIRECT CALL TO THE QUERY REST ENDPOINT OF THE FEATURE LAYER
+              //
+              const geoPlannerScenarioLayerQueryUrl = `${ this.sourcePortalItem.url }/${ this.interventionLayerId }/query`;
+              esriRequest(geoPlannerScenarioLayerQueryUrl, {
+                query: {
+                  where: `${ sourceScenarioFilter } AND (Intervention_System <> 'NA')`,
+                  outFields: '*',
+                  f: 'geojson'
+                }
+              }).then((response) => {
+                const {features} = response.data;
+                //console.info("GeoJSON features via esriRequest(): ", features);
+
+                // GEOPLANNER SOURCE SCENARIO FEATURES //
+                this.sourceScenarioFeaturesGeoJSON = features;
+
+                //
+                // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
+                //
+                const diagramBySystemsGeoJSON = this.diagramReaderUI.displayFeaturesList(this.sourceScenarioFeaturesGeoJSON);
+
+
+                this.dispatchEvent(new CustomEvent('geoplanner-features', {detail: {sourceScenarioFeaturesGeoJSON: this.sourceScenarioFeaturesGeoJSON}}));
+
+              });
+            });
+
+            resolve({portal});
+          }).catch(reject);
         }).catch(reject);
-      }).catch(reject);
+      });
     });
   }
 
@@ -151,9 +232,6 @@ class DiagramReader extends EventTarget {
   _findGeoPlannerGroups({portal}) {
     return new Promise((resolve, reject) => {
 
-      // FIND GROUP //
-      const geoPlannerGroupsList = document.getElementById('geoplanner-groups-list');
-
       // ASK PORTAL TO FIND GEOPLANNER GROUPS //
       portal.queryGroups({
         query: 'title:IGC tags:(geodesign AND geodesignProject)',
@@ -163,21 +241,7 @@ class DiagramReader extends EventTarget {
       }).then(({results}) => {
         //console.info(results);
 
-        const groupListItems = results.map(geoPlannerGroup => {
-          const groupListItem = document.createElement('div');
-          groupListItem.classList.add('geoplanner-list-item');
-          groupListItem.innerHTML = geoPlannerGroup.title;
-
-          groupListItem.addEventListener('click', () => {
-            geoPlannerGroupsList.querySelector('.geoplanner-list-item.selected')?.classList.remove('selected');
-            groupListItem.classList.add('selected');
-
-            this.dispatchEvent(new CustomEvent('portal-group-selected', {detail: {portalGroup: geoPlannerGroup}}));
-          });
-
-          return groupListItem;
-        });
-        geoPlannerGroupsList.replaceChildren(...groupListItems);
+        this.diagramReaderUI.geoPlannerProjectGroups = results;
 
         resolve({geoPlannerGroups: results});
       });
@@ -215,8 +279,6 @@ class DiagramReader extends EventTarget {
   _displayPortalItemsList({portalGroup}) {
     return new Promise((resolve, reject) => {
 
-      const portalItemsList = document.getElementById('geoplanner-items-list');
-
       /**
        * https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalGroup.html#queryItems
        *
@@ -236,105 +298,12 @@ class DiagramReader extends EventTarget {
         //   AND IN THIS CASE WE'RE JUST INTERESTED IN THE FEATURE LAYERS...
         const layerPortalItems = results.filter(item => item.isLayer);
 
-        // GEOPLANNER DESIGN LAYERS ITEMS //
-        const layerItemNodes = layerPortalItems.map(layerPortalItem => {
-
-          const layerItemNode = document.createElement('div');
-          layerItemNode.classList.add('geoplanner-list-item');
-          layerItemNode.innerHTML = `[${ layerPortalItem.id }] ${ layerPortalItem.title }`;
-
-          layerItemNode.addEventListener('click', () => {
-            portalItemsList.querySelector('.geoplanner-list-item.selected')?.classList.remove('selected');
-            layerItemNode.classList.add('selected');
-
-            this.dispatchEvent(new CustomEvent('portal-item-selected', {detail: {portalItem: layerPortalItem}}));
-          });
-
-          return layerItemNode;
-        });
-
-        // DISPLAY LIST OF ALL GEOPLANNER LAYER ITEMS //
-        portalItemsList.replaceChildren(...layerItemNodes);
+        this.diagramReaderUI.geoPlannerProjectGroupItems = layerPortalItems;
 
         resolve({layerPortalItems});
       });
     });
   }
-
-  /**
-   * UI - DISPLAY LIST OF FEATURES
-   *
-   * @param {HTMLElement} container
-   * @param {Graphic[]} features
-   * @param {boolean} isGeoJSON
-   * @returns {Map<string, Graphic[]>}
-   * @private
-   */
-  _displayFeaturesList(container, features, isGeoJSON = false) {
-
-    const diagramBySystems = new Map();
-
-    const diagramItems = features.map(diagramFeature => {
-
-      // DIAGRAM ATTRIBUTES //
-      const diagramAttributes = isGeoJSON ? diagramFeature.properties : diagramFeature.attributes;
-
-      // FEATURE ID //
-      const oid = isGeoJSON ? diagramFeature.id : diagramAttributes.OBJECTID;
-
-      // RELEVANT FEATURE/DIAGRAM PROPERTIES //
-      const {
-        Geodesign_ProjectID,
-        Geodesign_ScenarioID,
-        Intervention_System,
-        Intervention_Type
-      } = diagramAttributes;
-
-      // FEATURE/DIAGRAM ITEM //
-      const diagramItem = document.createElement('div');
-      diagramItem.classList.add('diagram-item');
-      diagramItem.innerHTML = `[ ${ oid } ] ${ Intervention_System } | ${ Intervention_Type }`;
-      diagramItem.title = JSON.stringify(diagramFeature, null, 2);
-
-      const geometryParts = diagramFeature.geometry.coordinates || diagramFeature.geometry.rings;
-      const isMultiPartGeometry = (geometryParts.length > 1);
-      isMultiPartGeometry && diagramItem.classList.add('multipart');
-
-      // ORGANIZE FEATURES/DIAGRAMS BY SYSTEM //
-      const diagramBySystem = diagramBySystems.get(Intervention_System) || [];
-      diagramBySystem.push(diagramFeature);
-      diagramBySystems.set(Intervention_System, diagramBySystem);
-
-      return diagramItem;
-    });
-    // ADD DIAGRAMS TO LIST //
-    container.replaceChildren(...diagramItems);
-
-    return diagramBySystems;
-  }
-
-  /**
-   *
-   * CREATE A RANDOM SELECTION OF CANDIDATE FEATURES
-   *  - SIMILAR AS A SET OF GDH NEGOTIATED DIAGRAMS BECOMES A NEW DESIGN...
-   *
-   * @param {Graphic[]} features array of features as Esri JS API Graphics
-   * @param {number} randomCount
-   * @returns {Graphic[]}
-   */
-  _createRandomScenarioCandidates(features, randomCount = 15) {
-
-    // GET RANDOM CANDIDATE FEATURES //
-    const sourceFeatures = [...features];
-    const candidateFeatures = [];
-    do {
-      const candidateIdx = Math.floor(Math.random() * sourceFeatures.length);
-      const candidateFeature = sourceFeatures.splice(candidateIdx, 1)[0];
-      candidateFeatures.push(candidateFeature);
-    } while (candidateFeatures.length < randomCount);
-
-    return candidateFeatures;
-  };
 
   /**
    * THESE ARE UPDATES THAT WILL HAVE TO BE MADE TO ALL SCENARIO FEATURES BEFORE
@@ -393,11 +362,6 @@ class DiagramReader extends EventTarget {
         this.sourcePortalItem.fetchData().then((sourceLayerPortalItemData) => {
           //console.info("SOURCE Scenario Portal Item: ", this.sourcePortalItem);
           //console.info("SOURCE Scenario Portal Item Data: ", sourceLayerPortalItemData);
-
-          //
-          // HERE WE COULD USE THE NAME OF THE DESIGN FROM GDH AS THE TITLE
-          // ALONG WITH OTHER INFORMATION IN THE SNIPPET AND DESCRIPTION
-          //
 
           //
           // CREATE NEW PORTAL ITEM FOR THE NEW SCENARIO //
@@ -467,7 +431,6 @@ class DiagramReader extends EventTarget {
                   //
                   // https://developers.arcgis.com/rest/users-groups-and-items/share-item-as-item-owner-.htm
                   //
-
                   const portalItemShareUrl = `${ updatedScenarioPortalItem.userItemUrl }/share`;
                   esriRequest(portalItemShareUrl, {
                     query: {
@@ -558,150 +521,6 @@ class DiagramReader extends EventTarget {
           resolve({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs});
         }).catch(reject);
       }).catch(reject);
-    });
-  }
-
-  /**
-   *
-   * @param {Portal} portal
-   * @returns {Promise<>}
-   */
-  initializeGeoPlannerLayers({portal}) {
-    return new Promise((resolve, reject) => {
-      require(['esri/request'], (esriRequest) => {
-
-        const geoplannerSourceItemDetails = document.getElementById('geoplanner-source-item-details');
-        const geoplannerTargetItemDetails = document.getElementById('geoplanner-target-item-details');
-
-        const gdhDiagramsList = document.getElementById('gdh-diagrams-list');
-        const gdhCandidatesList = document.getElementById('gdh-candidates-list');
-        const gdhScenarioList = document.getElementById('gdh-scenario-list');
-
-        const getRandomCandidatesBtn = document.getElementById('get-random-candidates-btn');
-        const addCandidatesBtn = document.getElementById('add-candidates-btn');
-
-        if (portal) {
-
-          let _candidateFeatures;
-
-          // FIND GEOPLANNER GROUPS //
-          this._findGeoPlannerGroups({portal}).then(({geoPlannerGroups}) => {
-            //console.info("GeoPlanner Groups: ", geoPlannerGroups);
-
-            //
-            // WHEN PORTAL GROUP IS SELECTED //
-            //
-            this.addEventListener('portal-group-selected', ({detail: {portalGroup}}) => {
-              // SOURCE GROUP //
-              this.sourcePortalGroup = portalGroup;
-              // DISPLAY LIST OF IGC FEATURE LAYER PORTAL ITEMS //
-              this._displayPortalItemsList({portalGroup}).then();
-            });
-
-            //
-            // WHEN PORTAL ITEM IS SELECTED //
-            //
-            this.addEventListener('portal-item-selected', ({detail: {portalItem}}) => {
-              // SOURCE PORTAL ITEM //
-              this.sourcePortalItem = portalItem;
-
-              // GET RPOJECT ID FROM TYPEKEYWORD //
-              const projectIDkeyword = this.sourcePortalItem.typeKeywords.find(keyword => keyword.startsWith('geodesignProjectID'));
-              const projectID = projectIDkeyword.replace(/geodesignProjectID/, '');
-
-              // SOURCE SCENARIO FILTER //
-              const sourceScenarioID = this.sourcePortalItem.id;
-              const sourceScenarioFilter = `(Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ sourceScenarioID }')`;
-              geoplannerSourceItemDetails.innerHTML = sourceScenarioFilter;
-
-              //
-              // GET THE FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
-              //  - esri/request IS A GENERIC METHOD TO MAKE DIRECT WEB CALLS BUT WILL HANDLE ESRI SPECIFIC USE-CASES
-              //      DOC: https://developers.arcgis.com/javascript/latest/api-reference/esri-request.html
-              //  - HERE WE USE IT TO MAKE A DIRECT CALL TO THE QUERY REST ENDPOINT OF THE FEATURE LAYER
-              //
-              const geoPlannerScenarioLayerQueryUrl = `${ this.sourcePortalItem.url }/${ this.interventionLayerId }/query`;
-              esriRequest(geoPlannerScenarioLayerQueryUrl, {
-                query: {
-                  where: `${ sourceScenarioFilter } AND (Intervention_System <> 'NA')`,
-                  outFields: '*',
-                  f: 'geojson'
-                }
-              }).then((response) => {
-                const {features} = response.data;
-                //console.info("GeoJSON features via esriRequest(): ", features);
-
-                // GEOPLANNER SOURCE SCENARIO FEATURES //
-                this.sourceScenarioFeaturesGeoJSON = features;
-
-                this.dispatchEvent(new CustomEvent('geoplanner-features', {detail: {sourceScenarioFeaturesGeoJSON: this.sourceScenarioFeaturesGeoJSON}}));
-
-                //
-                // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
-                //
-                const diagramBySystemsGeoJSON = this._displayFeaturesList(gdhDiagramsList, this.sourceScenarioFeaturesGeoJSON, true);
-                //console.info("Diagrams by System as GeoJSON: ", diagramBySystemsGeoJSON);
-
-              });
-            });
-
-            //
-            // CREATE A LIST OF RANDOM CANDIDATE FEATURES //
-            //
-            getRandomCandidatesBtn.addEventListener('click', () => {
-              if (this.sourceScenarioFeaturesGeoJSON) {
-                // CANDIDATE GEOPLANNER SCENARIO FEATURES //
-                _candidateFeatures = this._createRandomScenarioCandidates(this.sourceScenarioFeaturesGeoJSON);
-                //console.info('Random Candidate Features: ', _candidateFeatures);
-
-                const diagramBySystemsCandidates = this._displayFeaturesList(gdhCandidatesList, _candidateFeatures, true);
-                //console.info("Diagrams by System for Candidate Features: ", diagramBySystemsCandidates);
-              } else {
-                alert('No Scenario Portal Item selected...');
-              }
-            });
-
-            //
-            // ADD RANDOM CANDIDATE FEATURED TO THE GEOPLANNER PROJECT AS A NEW SCENARIO //
-            //
-            addCandidatesBtn.addEventListener('click', () => {
-              if (_candidateFeatures) {
-
-                //
-                //   NOTE: IF USING GDH THEN THE FEATURES SHOULD COME BACK AS ESRI JSON
-                //         AND THIS CONVERSION IS ***NOT*** NEEDED...
-                //
-                const designFeaturesAsEsriJSON = _candidateFeatures.map(feature => {
-                  return {
-                    attributes: {...feature.properties},
-                    geometry: Terraformer.geojsonToArcGIS(feature.geometry)
-                  };
-                });
-
-                this.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
-
-                  // NEW SCENARIO FILTER //
-                  geoplannerTargetItemDetails.innerHTML = scenarioFilter;
-
-                  // DISPLAY LIST OF NEW SCENARIO FEATURE OIDS //
-                  gdhScenarioList.innerHTML = `Add Feature Results (${ addFeaturesOIDs.length } of ${ designFeaturesAsEsriJSON.length })`;
-                  gdhScenarioList.innerHTML += '<br><br>';
-                  gdhScenarioList.innerHTML += addFeaturesOIDs.map(oid => `OID: ${ oid }`).join('<br>');
-
-                });
-
-              } else {
-                alert('please get random candidates first...');
-              }
-            });
-
-            resolve();
-          });
-
-        } else {
-          reject(new Error("ArcGIS.com Online portal not initialized."));
-        }
-      });
     });
   }
 

@@ -13,13 +13,13 @@ const diagramReader = new DiagramReader();
 diagramReader.initialize().then(({portal}) => {
   console.info('DiagramReader::initialize', portal, diagramReader);
 
-  diagramReader.addEventListener('portal-group-selected', ({detail: {portalGroup}}) => {
+  /*diagramReader.addEventListener('portal-group-selected', ({detail: {portalGroup}}) => {
     console.info('DiagramReader:::portal-group-selected', portalGroup, diagramReader);
-  });
+  });*/
 
-  diagramReader.addEventListener('portal-item-selected', ({detail: {portalItem}}) => {
+  /*diagramReader.addEventListener('portal-item-selected', ({detail: {portalItem}}) => {
     console.info('DiagramReader:::portal-item-selected', portalItem, diagramReader);
-  });
+  });*/
 
   diagramReader.addEventListener('geoplanner-features', ({detail: {sourceScenarioFeaturesGeoJSON}}) => {
     console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
