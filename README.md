@@ -6,8 +6,8 @@ Simple app showing how to use the ArcGIS API for JavaScript to connect to discov
 
  - [ArcGIS API for Javascript](https://developers.arcgis.com/javascript/latest/api-reference/)
  - [ArcGIS Rest API - Content Management](https://developers.arcgis.com/rest/users-groups-and-items/working-with-users-groups-and-items.htm)
- - [Geodesign Hub](https://www.geodesignhub.com/)
- - [Geodesign HUB API](https://www.geodesignhub.com/api/)
+ - [Geodesignhub](https://www.geodesignhub.com/)
+ - [Geodesignhub API](https://www.geodesignhub.com/api/)
 
 ### [Check out the test app here](https://geoxc-apps.bd.esri.com/IGC/GDHDiagrams/DiagramReader.html)
 
@@ -23,12 +23,13 @@ Simple app showing how to use the ArcGIS API for JavaScript to connect to discov
 
 > NOTE: step 5 below is currently simulated by picking some random features 
  
-5. Create new Geodesign Hub Project
-   1. Use list of features as a source GDH Plan
-   2. Each feature becomes one or more GDH diagram
-      1. Organize by system, actions, interventions, or ??? 
-   3. Perform negotiations resulting in one or more GDH Designs
-      1. NOTE: Each GDH negotiated Design will be set of features in Esri JSON format  
+5. Create new Geodesignhub Project, you can select the "Global Climate Action" template to prepopulate the project setup correctly. 
+   1. Get your project ID and API token from Geodesignhub, for more information see [support article](https://community.geodesignhub.com/t/where-is-my-project-id/1275)
+   2. Use list of features as a base set of diagrams for Geodesignhub
+   3. Each feature becomes one or more GDH diagrams in the appropriate Geodesignhub system, this plugin will manage the migration provided that the project has been correctly setup (see instructions above regarding selectin the correct project setup template)
+      1. The diagrams will be organized by system
+   4. Perform negotiations resulting in one or two GDH Designs
+      1. NOTE: Each GDH negotiated Design will be set of features in Esri JSON format
 6. For each GDH Design
    1. Create new GeoPlanner Scenario Portal Item
       1. NOTE: The Scenario ID will be the new Portal Item id 
