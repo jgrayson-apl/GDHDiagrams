@@ -325,7 +325,7 @@ function arcGISOnlineSignIn() {
 
   // SIGN IN TO ARCGIS ONLINE //
   diagramReader.signIn().then(({portal}) => {
-    console.info('DiagramReader::initialize', portal, diagramReader);
+    console.info('DiagramReader::signIn', portal, diagramReader);
 
     //
     // AFTER WE'RE SIGNED IN WE LISTEN TO WHEN GEOJOSN FEATURES HAVE BEEN RETRIEVED //
