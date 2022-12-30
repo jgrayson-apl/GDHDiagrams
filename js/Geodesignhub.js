@@ -36,6 +36,9 @@ function negotiate_in_geodesign_hub(features) {
 // TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:9000/api/v1';
 
+// JG //
+let _sourceScenarioFeaturesGeoJSON = null;
+
 // Custom API error to throw
 function ApiError(message, data, status) {
   let response = null;
@@ -329,11 +332,22 @@ function arcGISOnlineSignIn() {
       console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
 
       //
+      // SET LOCAL VARIABLE ACCESSIBLE TO OTHER FUNCTIONS //
+      //
+      _sourceScenarioFeaturesGeoJSON = sourceScenarioFeaturesGeoJSON;
+
+      //
       // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
       // BASED ON THE SYSTEM, PROJECT/POLICY, ETC... WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN
       // SOURCE SCENARIO FEATURES
       //
       const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(sourceScenarioFeaturesGeoJSON);
+
+      //
+      // AFTER THE NEGOTIATIONS ARE COMPLETE WE NEED TO SEND THEM BACK AS A NEW GEOPLANNER SCENARIO
+      // WHICH CONSISTS OF A NEW FEATURE LAYER PORTAL ITEM (NOT A NEW SERVICE... JUST A NEW PORTAL
+      // ITEM WITH A DEFINITION EXPRESSION) AND NEW FEATURES INTO THE PROJECT FEATURE LAYER.
+      //
 
       // TESTING: DON'T TRANSFER ALL FEATURES OVER...
       const ignoreUpdate = true;
