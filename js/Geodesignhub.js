@@ -327,7 +327,7 @@ function arcGISOnlineSignIn() {
   diagramReader.signIn().then(({portal}) => {
     console.info('DiagramReader::initialize', portal, diagramReader);
 
-    // LISTEN TO WHEN GEOJOSN FEATRUES HAVE BEEN RETRIEVED //
+    // LISTEN TO WHEN GEOJOSN FEATURES HAVE BEEN RETRIEVED //
     diagramReader.addEventListener('geoplanner-features', ({detail: {sourceScenarioFeaturesGeoJSON}}) => {
       console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
 
