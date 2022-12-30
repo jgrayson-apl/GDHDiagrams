@@ -72,13 +72,6 @@ class DiagramReader extends EventTarget {
 
     this.diagramReaderUI = new DiagramReaderUI();
 
-    // TOGGLE PANE SECTIONS //
-    document.querySelectorAll('.pane').forEach(paneNode => {
-      paneNode.querySelector('.toggle')?.addEventListener('click', () => {
-        paneNode.classList.toggle('collapsed');
-      });
-    });
-
   }
 
   /**
@@ -86,7 +79,7 @@ class DiagramReader extends EventTarget {
    *
    * @returns {Promise<{portal:Portal}>}
    */
-  initialize() {
+  signIn() {
     return new Promise((resolve, reject) => {
       require(['esri/request'], (esriRequest) => {
 
@@ -132,9 +125,7 @@ class DiagramReader extends EventTarget {
               // SOURCE SCENARIO FILTER //
               const sourceScenarioID = this.sourcePortalItem.id;
               const sourceScenarioFilter = `(Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ sourceScenarioID }')`;
-
-              // UI STUFF //
-              this.diagramReaderUI.sourceScenarioFilter = sourceScenarioFilter;
+              console.info("Source Scenario Filter: ", sourceScenarioFilter);
 
               //
               // GET THE FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
@@ -244,7 +235,7 @@ class DiagramReader extends EventTarget {
         this.diagramReaderUI.geoPlannerProjectGroups = results;
 
         resolve({geoPlannerGroups: results});
-      });
+      }).catch(reject);
     });
   }
 
@@ -301,7 +292,7 @@ class DiagramReader extends EventTarget {
         this.diagramReaderUI.geoPlannerProjectGroupItems = layerPortalItems;
 
         resolve({layerPortalItems});
-      });
+      }).catch(reject);
     });
   }
 

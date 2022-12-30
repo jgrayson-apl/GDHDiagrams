@@ -55,7 +55,6 @@ class DiagramReaderUI extends EventTarget {
   #sourceScenarioFilter;
   set sourceScenarioFilter(value) {
     this.#sourceScenarioFilter = value;
-    this._displayScenarioFilter();
   }
 
   constructor() {
@@ -64,8 +63,11 @@ class DiagramReaderUI extends EventTarget {
     this.signInUserLabel = document.getElementById('sign-in-user-label');
 
     this.geoPlannerGroupsList = document.getElementById('geoplanner-groups-list');
+    this.geoplannerGroupBtn = document.getElementById('geoplanner-group-btn');
+
     this.portalItemsList = document.getElementById('geoplanner-items-list');
-    this.geoplannerSourceItemDetails = document.getElementById('geoplanner-source-item-details');
+    this.geoplannerItemsBtn = document.getElementById('geoplanner-items-btn');
+
     this.gdhDiagramsList = document.getElementById('gdh-diagrams-list');
 
     // TOGGLE PANE SECTIONS //
@@ -93,16 +95,10 @@ class DiagramReaderUI extends EventTarget {
     if (this.#geoPlannerProjectGroups?.length) {
 
       const groupListItems = this.#geoPlannerProjectGroups.map(geoPlannerGroup => {
-        const groupListItem = document.createElement('div');
-        groupListItem.classList.add('geoplanner-list-item');
+
+        const groupListItem = document.createElement('option');
+        groupListItem.setAttribute('value', geoPlannerGroup.id);
         groupListItem.innerHTML = geoPlannerGroup.title;
-
-        groupListItem.addEventListener('click', () => {
-          this.geoPlannerGroupsList.querySelector('.geoplanner-list-item.selected')?.classList.remove('selected');
-          groupListItem.classList.add('selected');
-
-          this.dispatchEvent(new CustomEvent('portal-group-selected', {detail: {portalGroup: geoPlannerGroup}}));
-        });
 
         return groupListItem;
       });
@@ -111,6 +107,12 @@ class DiagramReaderUI extends EventTarget {
     } else {
       this.geoPlannerGroupsList.replaceChildren();
     }
+
+    this.geoplannerGroupBtn.addEventListener('click', () => {
+      const geoPlannerGroup = this.#geoPlannerProjectGroups.find(group => group.id === this.geoPlannerGroupsList.value);
+      this.dispatchEvent(new CustomEvent('portal-group-selected', {detail: {portalGroup: geoPlannerGroup}}));
+    });
+
   }
 
   /**
@@ -128,16 +130,9 @@ class DiagramReaderUI extends EventTarget {
       // GEOPLANNER DESIGN LAYERS ITEMS //
       const layerItemNodes = layerPortalItems.map(layerPortalItem => {
 
-        const layerItemNode = document.createElement('div');
-        layerItemNode.classList.add('geoplanner-list-item');
-        layerItemNode.innerHTML = `[${ layerPortalItem.id }] ${ layerPortalItem.title }`;
-
-        layerItemNode.addEventListener('click', () => {
-          this.portalItemsList.querySelector('.geoplanner-list-item.selected')?.classList.remove('selected');
-          layerItemNode.classList.add('selected');
-
-          this.dispatchEvent(new CustomEvent('portal-item-selected', {detail: {portalItem: layerPortalItem}}));
-        });
+        const layerItemNode = document.createElement('option');
+        layerItemNode.setAttribute('value', layerPortalItem.id);
+        layerItemNode.innerHTML = layerPortalItem.title;
 
         return layerItemNode;
       });
@@ -148,14 +143,11 @@ class DiagramReaderUI extends EventTarget {
     } else {
       this.portalItemsList.replaceChildren();
     }
-  }
 
-  /**
-   *
-   * @private
-   */
-  _displayScenarioFilter() {
-    this.geoplannerSourceItemDetails.innerHTML = this.#sourceScenarioFilter || '';
+    this.geoplannerItemsBtn.addEventListener('click', () => {
+      const layerPortalItem = this.#geoPlannerProjectGroupItems.find(item => item.id === this.portalItemsList.value);
+      this.dispatchEvent(new CustomEvent('portal-item-selected', {detail: {portalItem: layerPortalItem}}));
+    });
   }
 
   /**
@@ -165,7 +157,7 @@ class DiagramReaderUI extends EventTarget {
    * @returns {Map<string, Graphic[]>} features/diagrams organized by system
    * @private
    */
-  displayFeaturesList( features) {
+  displayFeaturesList(features) {
 
     const diagramBySystems = new Map();
 

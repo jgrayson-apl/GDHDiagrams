@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0 maximum-scale=1.0"/>
     <link rel="icon" href="./assets/favicon.ico" sizes="32x32" type="image/vnd.microsoft.icon">
     <title>Geodesign Hub Diagrams</title>
-  
+    
     <!-- TERRAFORMER -->
     <!--  - USED HERE FOR TESTING ONLY -
       https://github.com/terraformer-js/terraformer
@@ -21,25 +21,29 @@
     <link rel="stylesheet" type="text/css" href="css/DiagramReader.css">
     <script type="module" src="js/DiagramReader.js"></script>
     <script type="module" src="js/Geodesignhub.js"></script>
-    
+  
   </head>
   <body>
     
+    <div id="geodesignhub_migration_cont" class="pane">
+      <div class="pane-title">Migrate Diagrams to Geodesignhub</div>
+      <br> <label for="gdh-project-id">Project ID</label>
+      <input type="text" placeholder="Geodesignhub Project ID.." id="gdh-project-id" name="gdh-project-id">
+      <label for="gdh-api-token">API Token</label>
+      <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token">
+      <br><br>
+      <button class="action-btn" id="verify-gdh-creds-btn">Verify Credentials</button>
+      <span>&nbsp;&nbsp;</span>
+      <button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
+      <pre id="gdh-console"></pre>
+    </div>
+    
+    
     <div class="pane">
-      <div class="pane-title">GeoPlanner Scenario to Geodesign Hub Plan & Diagrams</div>
+      <div class="pane-title">ArcGIS Online</div>
+      <button class="action-btn" id="verify-ags-btn">Sign In</button>
       <div>
         <span class="pane-label">Singed-in User:</span> <span id="sign-in-user-label"></span>
-      </div>
-      <div class="pane-links">
-        <span>&nbsp;|&nbsp;</span>
-        <a href="https://www.geodesignhub.com/" target="_blank">Geodesign Hub</a>
-        <span>&nbsp;|&nbsp;</span>
-        <a href="https://www.geodesignhub.com/api/" target="_blank">Geodesign Hub API</a>
-        <span>&nbsp;|&nbsp;</span>
-        <a href="https://developers.arcgis.com/javascript/latest/api-reference/" target="_blank">ArcGIS API for Javascript</a>
-        <span>&nbsp;|&nbsp;</span>
-        <a href="https://developers.arcgis.com/rest/users-groups-and-items/working-with-users-groups-and-items.htm" target="_blank">Esri REST API - Content Management</a>
-        <span>&nbsp;|&nbsp;</span>
       </div>
     </div>
     
@@ -51,9 +55,10 @@
           title:IGC tags:(geodesign AND geodesignProject)
         </div>
       </div>
-      <div id="geoplanner-groups-list" class="pane-section"></div>
+      <select id="geoplanner-groups-list"></select>
+      <button id="geoplanner-group-btn" class="action-btn">select</button>
     </div>
-  
+    
     <div class="pane">
       <span class="toggle"></span>
       <div>
@@ -62,10 +67,11 @@
           tags:(geodesign AND geodesignScenario)
         </div>
       </div>
-      <div id="geoplanner-items-list" class="pane-section"></div>
+      <select id="geoplanner-items-list"></select>
+      <button id="geoplanner-items-btn" class="action-btn">select</button>
     </div>
     
-    <div class="pane">
+    <div class="pane" hidden>
       <span class="toggle"></span>
       <div>
         <span class="pane-label">GeoPlanner Source Portal Item</span>
@@ -98,28 +104,7 @@
       <button id="get-random-candidates-btn" class="action-btn">Get Random Candidates</button>
       <div id="gdh-candidates-list" class="pane-section"></div>
     </div>
-    
-    <div id="geodesignhub_migration_cont" class="pane">
-      <span class="toggle"></span>
-      <div>
-        <span class="pane-label">Migrate Diagrams to Geodesignhub</span>
-      </div>
-      <br> <label for="gdh-project-id">Project ID</label> <input type="text" placeholder="Geodesignhub Project ID.." id="gdh-project-id" name="gdh-project-id">
-      
-      <label for="gdh-api-token">API Token</label> <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token"> <br><br>
-      <button class="action-btn" id="verify-gdh-creds-btn">Verify Credentials</button>&nbsp;&nbsp;<button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
-      <pre id="gdh-console"></pre>
-    </div>
-    
-    <div class="pane" hidden>
-      <span class="toggle"></span>
-      <div>
-        <span class="pane-label">Create New GeoPlanner Scenario</span>
-      </div>
-      <button id="add-candidates-btn" class="action-btn">New GeoPlanner Scenario</button>
-      <div id="geoplanner-target-item-details" class="pane-section"></div>
-      <div id="gdh-scenario-list" class="pane-section"></div>
-    </div>
+  
   
   </body>
 </html>

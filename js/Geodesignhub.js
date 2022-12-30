@@ -8,48 +8,10 @@
  */
 import DiagramReader from './DiagramReader.js';
 
-// NEW INSTANCE OF DIAGRAM READER //
-const diagramReader = new DiagramReader();
-diagramReader.initialize().then(({portal}) => {
-  console.info('DiagramReader::initialize', portal, diagramReader);
-
-  /*diagramReader.addEventListener('portal-group-selected', ({detail: {portalGroup}}) => {
-    console.info('DiagramReader:::portal-group-selected', portalGroup, diagramReader);
-  });*/
-
-  /*diagramReader.addEventListener('portal-item-selected', ({detail: {portalItem}}) => {
-    console.info('DiagramReader:::portal-item-selected', portalItem, diagramReader);
-  });*/
-
-  diagramReader.addEventListener('geoplanner-features', ({detail: {sourceScenarioFeaturesGeoJSON}}) => {
-    console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
-
-    //
-    // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
-    // BASED ON THE SYSTEM, PROJECT/POLICY, ETC... WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN
-    // SOURCE SCENARIO FEATURES
-    //
-    const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(sourceScenarioFeaturesGeoJSON);
-
-    // TESTING: DON'T TRANSFER ALL FEATURES OVER...
-    const ignoreUpdate = true;
-    if (!ignoreUpdate) {
-      //
-      // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
-      //
-      diagramReader.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
-        console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs, diagramReader);
-
-      });
-    }
-  });
-
-});
-
 /**
  *
  * *** DO NOT USE ***
- *  NOTE: JUST A DUMMY METHOD SO NO ERRORS ARE NOT THROWN
+ *  NOTE: JUST A DUMMY METHOD SO ERRORS ARE NOT THROWN
  *
  * @param {{}[]} features
  * @returns {Graphic[]}
@@ -62,6 +24,14 @@ function negotiate_in_geodesign_hub(features) {
     };
   });
 }
+
+//
+//
+//
+//
+//
+//
+//
 
 // TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:9000/api/v1';
@@ -215,6 +185,8 @@ const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPol
 const consoleElement = document.querySelector('#gdh-console');
 const verifyCredenditalsBtn = document.querySelector('#verify-gdh-creds-btn');
 const migrateDiagramsBtn = document.querySelector('#migrate-diagrams-gdh-btn');
+// JG //
+const arcGISOnlineSignInBtn = document.querySelector('#verify-ags-btn');
 
 function verifyCredentials() {
   // Save button text and set it to loading
@@ -343,7 +315,50 @@ function requestJsonError() {
   });
 }
 
+function arcGISOnlineSignIn() {
+
+  // NEW INSTANCE OF DIAGRAM READER //
+  const diagramReader = new DiagramReader();
+
+  // SIGN IN TO ARCGIS ONLINE //
+  diagramReader.signIn().then(({portal}) => {
+    console.info('DiagramReader::initialize', portal, diagramReader);
+
+    // LISTEN TO WHEN GEOJOSN FEATRUES HAVE BEEN RETRIEVED //
+    diagramReader.addEventListener('geoplanner-features', ({detail: {sourceScenarioFeaturesGeoJSON}}) => {
+      console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
+
+      //
+      // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
+      // BASED ON THE SYSTEM, PROJECT/POLICY, ETC... WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN
+      // SOURCE SCENARIO FEATURES
+      //
+      const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(sourceScenarioFeaturesGeoJSON);
+
+      // TESTING: DON'T TRANSFER ALL FEATURES OVER...
+      const ignoreUpdate = true;
+      if (!ignoreUpdate) {
+        //
+        // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
+        //
+        diagramReader.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
+          console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs, diagramReader);
+
+        }).catch(error => {
+          console.error("Diagram Reader createNewGeoPlannerScenario() Error: ", error);
+        });
+      }
+    });
+
+  }).catch(error => {
+    console.error("Diagram Reader initialize() Error: ", error);
+  });
+
+}
+
 // Bind actions to buttons
 
 verifyCredenditalsBtn.addEventListener('click', verifyCredentials);
 migrateDiagramsBtn.addEventListener('click', migrateIGCDiagrams);
+// JG //
+arcGISOnlineSignInBtn.addEventListener('click', arcGISOnlineSignIn);

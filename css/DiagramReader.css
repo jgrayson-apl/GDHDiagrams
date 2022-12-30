@@ -112,7 +112,7 @@ pre {
   font-size: larger;
 }
 
-.geoplanner-list-item {
+/*.geoplanner-list-item {
   cursor: pointer;
   margin: 2px;
   padding: 2px 2px 2px 10px;
@@ -129,4 +129,10 @@ pre {
   color: dodgerblue;
   border-color: dodgerblue;
   background-color: #ffffff;
+}*/
+
+select {
+  margin: 10px;
+  padding: 10px;
+  font-size: larger;
 }
