@@ -25,19 +25,6 @@
   </head>
   <body>
     
-    <div id="geodesignhub_migration_cont" class="pane">
-      <div class="pane-title">Migrate Diagrams to Geodesignhub</div>
-      <br> <label for="gdh-project-id">Project ID</label>
-      <input type="text" placeholder="Geodesignhub Project ID.." id="gdh-project-id" name="gdh-project-id">
-      <label for="gdh-api-token">API Token</label>
-      <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token">
-      <br><br>
-      <button class="action-btn" id="verify-gdh-creds-btn">Verify Credentials</button>
-      <span>&nbsp;&nbsp;</span>
-      <button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
-      <pre id="gdh-console"></pre>
-    </div>
-    
     
     <div class="pane">
       <div class="pane-title">ArcGIS Online</div>
@@ -102,6 +89,19 @@
       <div id="gdh-candidates-list" class="pane-section"></div>
     </div>
   
+    <div id="geodesignhub_migration_cont" class="pane" hidden>
+      <div class="pane-title">Migrate Diagrams to Geodesignhub</div>
+      <br> <label for="gdh-project-id">Project ID</label>
+      <input type="text" placeholder="Geodesignhub Project ID.." id="gdh-project-id" name="gdh-project-id">
+      <label for="gdh-api-token">API Token</label>
+      <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token">
+      <br><br>
+      <button class="action-btn" id="verify-gdh-creds-btn">Verify Credentials</button>
+      <span>&nbsp;&nbsp;</span>
+      <button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
+      <pre id="gdh-console"></pre>
+    </div>
+    
   
   </body>
 </html>
