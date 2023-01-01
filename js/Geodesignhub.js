@@ -35,7 +35,7 @@ function negotiate_in_geodesign_hub(features) {
 
 // TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:9000/api/v1';
-
+let _gdhNegotiatedDesignJSON = null
 // JG //
 let _sourceScenarioFeaturesGeoJSON = null;
 
@@ -169,6 +169,36 @@ const gdhVerifyProjectSystems = (projectID, apiToken) => {
     });
 };
 
+const gdhGetProjectDesignTeams = (projectID, apiToken) => {
+  return fetchResource(`projects/${projectID}/cteams/`,
+    {
+      method: 'GET',
+      headers: {
+        "Authorization": `Token ${apiToken}`
+      }
+    });
+};
+
+const gdhGetDesignTeamDesigns = (projectID, apiToken, designTeamID) => {
+  return fetchResource(`projects/${projectID}/cteams/${designTeamID}/`,
+    {
+      method: 'GET',
+      headers: {
+        "Authorization": `Token ${apiToken}`
+      }
+    });
+};
+
+const gdhGetDesignESRIJSON = (projectID, apiToken, designTeamID, designID) => {
+  return fetchResource(`projects/${projectID}/cteams/${designTeamID}/${designID}/esri/`,
+    {
+      method: 'GET',
+      headers: {
+        "Authorization": `Token ${apiToken}`
+      }
+    });
+};
+
 const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPolicy, postJson) => {
 
   return fetchResource(`projects/${projectID}/systems/${systemID}/add/${projectOrPolicy}/`,
@@ -188,6 +218,8 @@ const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPol
 const consoleElement = document.querySelector('#gdh-console');
 const verifyCredenditalsBtn = document.querySelector('#verify-gdh-creds-btn');
 const migrateDiagramsBtn = document.querySelector('#migrate-diagrams-gdh-btn');
+const gdhDesignTeamSelectBtn = document.querySelector('#geodesignhub-team-selection-btn');
+const migrateGdhDesignBtn = document.querySelector('#geodesignhub-migrate-selected-gdh-desig-btn');
 // JG //
 const arcGISOnlineSignInBtn = document.querySelector('#verify-ags-btn');
 
@@ -245,6 +277,21 @@ function verifyCredentials() {
             if (migrateDiagramsBtn.classList.contains('hide')) {                        // remove the class
               migrateDiagramsBtn.classList.remove('hide');
             }
+
+            gdhGetProjectDesignTeams(gdhProjectID, gdhApiToken).then(cteamData => {
+
+              var teamsSelectionCont = document.getElementById('geodesignhub-teams-list');
+              teamsSelectionCont.options.length = 0;
+              for(var i = 0; i < cteamData.length; i++) {
+                  var opt = document.createElement('option');
+                  opt.setAttribute("id", cteamData[i]['id']);                  
+                  opt.innerHTML = cteamData[i]['title'];
+                  teamsSelectionCont.appendChild(opt);
+              }
+
+             }).catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
+
+
           } else {
 
             consoleElement.innerHTML = "Geodesignhub project is not setup correctly, please contact your administrator";
@@ -283,6 +330,60 @@ function gdhGPLSystemConverter(gplSystem) {
   return gdhSystemID;
 }
 
+function getDesignsforGDHTeam(){
+
+  const gdhApiToken = document.getElementById("gdh-api-token").value;
+  const gdhProjectID = document.getElementById("gdh-project-id").value;
+  const designTeamCont = document.getElementById('geodesignhub-teams-list');
+  const gdhDesignTeamID = designTeamCont.options[designTeamCont.selectedIndex].id;
+
+  gdhGetDesignTeamDesigns(gdhProjectID, gdhApiToken, gdhDesignTeamID).then(designData => {
+    // Skipping as it will always fail
+
+    const designSynthesisData = designData['synthesis'];
+    var designSelectionCont = document.getElementById('geodesignhub-team-design-list');
+    designSelectionCont.options.length = 0;
+    for(var i = 0; i < designSynthesisData.length; i++) {
+        var opt = document.createElement('option');
+        opt.setAttribute("id", designSynthesisData[i]['id']);                  
+        opt.innerHTML = designSynthesisData[i]['description'];
+        designSelectionCont.appendChild(opt);
+    }
+
+  }).catch(error => {
+    
+  });
+
+}
+function getDesignJSONandMigrate(){
+  
+  const buttonText = this.innerHTML;
+  this.innerHTML = 'Processing...';
+  consoleElement.innerHTML = '';
+  const gdhApiToken = document.getElementById("gdh-api-token").value;
+  const gdhProjectID = document.getElementById("gdh-project-id").value;
+  const designTeamCont = document.getElementById('geodesignhub-teams-list');
+  var gdhDesignTeamID = designTeamCont.options[designTeamCont.selectedIndex].id;
+
+  
+  const designTeamDesignCont = document.getElementById('geodesignhub-team-design-list');
+  var gdhDesignID = designTeamDesignCont.options[designTeamDesignCont.selectedIndex].id;
+
+  gdhGetDesignESRIJSON(gdhProjectID, gdhApiToken, gdhDesignTeamID, gdhDesignID).then(designData => {
+    // TODO: Migrate this design to GPL
+    _gdhNegotiatedDesignJSON = designData;
+    this.innerHTML ='Migration complete..'
+
+
+  }).catch(error => {
+    
+    consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
+    // Reset button text
+    this.innerHTML = buttonText;
+  });
+
+}
+
 function migrateIGCDiagrams() {
   // Save button text and set it to loading
   const buttonText = this.innerHTML;
@@ -300,20 +401,20 @@ function migrateIGCDiagrams() {
     const gdhSystemID = gdhGPLSystemConverter(gplSystem);
 
     const gj = current_diagram_details['geometry'];
-    let gj_feature_object ={ "type": "Feature","properties": {},"geometry": {"type": gj['type'], "coordinates":gj['coordinates']} }
-
+    let gj_feature_object = { "type": "Feature", "properties": {}, "geometry": { "type": gj['type'], "coordinates": gj['coordinates'] } }
+    let gj_feature_collection = {"type":"FeatureCollection","features":[gj_feature_object] }
     let geoJSONGeometryType = gj['type'].toLowerCase();
-    
+
     if (geoJSONGeometryType == 'LineString') {
       geoJSONGeometryType = 'polyline';
     }
 
-    var postJson = { "featuretype": geoJSONGeometryType, "description": gplInterventionName, "geometry": gj_feature_object };
+    var postJson = { "featuretype": geoJSONGeometryType, "description": gplInterventionName, "geometry": gj_feature_collection };
 
     if (index == 1) {
       break;
     }
-
+    console.log(postJson)
     if (gdhSystemID !== 0) {
       gdhMigrateDiagramsToProject(gdhProjectID, gdhApiToken, gdhSystemID, 'project', postJson).then(data => {
         consoleElement.innerHTML = `<div>${JSON.stringify(data, null, 2)}</div>${consoleElement.innerHTML}`;
@@ -381,6 +482,12 @@ function arcGISOnlineSignIn() {
       _sourceScenarioFeaturesGeoJSON = sourceScenarioFeaturesGeoJSON;
       const gdhMigrationCont = document.getElementById('geodesignhub_migration_cont');
       gdhMigrationCont.removeAttribute("hidden");
+
+      const gdhDesignMigrationDesignTeamSelectionCont = document.getElementById('geodesignhub_to_gpl_migration_design_team_selection_cont');
+      gdhDesignMigrationDesignTeamSelectionCont.removeAttribute("hidden");
+
+      const gdhDesignMigrationSelectionCont = document.getElementById('geodesignhub_to_gpl_migration_cont');
+      gdhDesignMigrationSelectionCont.removeAttribute("hidden");
       //
       // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
       // BASED ON THE SYSTEM, PROJECT/POLICY, ETC... WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN
@@ -419,5 +526,7 @@ function arcGISOnlineSignIn() {
 
 verifyCredenditalsBtn.addEventListener('click', verifyCredentials);
 migrateDiagramsBtn.addEventListener('click', migrateIGCDiagrams);
+gdhDesignTeamSelectBtn.addEventListener('click', getDesignsforGDHTeam);
+migrateGdhDesignBtn.addEventListener('click', getDesignJSONandMigrate);
 // JG //
 arcGISOnlineSignInBtn.addEventListener('click', arcGISOnlineSignIn);
