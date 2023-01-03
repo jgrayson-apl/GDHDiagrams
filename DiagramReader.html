@@ -25,19 +25,6 @@
   </head>
   <body>
     
-    <div id="geodesignhub_migration_cont" class="pane">
-      <div class="pane-title">Migrate Diagrams to Geodesignhub</div>
-      <br> <label for="gdh-project-id">Project ID</label>
-      <input type="text" placeholder="Geodesignhub Project ID.." id="gdh-project-id" name="gdh-project-id">
-      <label for="gdh-api-token">API Token</label>
-      <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token">
-      <br><br>
-      <button class="action-btn" id="verify-gdh-creds-btn">Verify Credentials</button>
-      <span>&nbsp;&nbsp;</span>
-      <button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
-      <pre id="gdh-console"></pre>
-    </div>
-    
     
     <div class="pane">
       <div class="pane-title">ArcGIS Online</div>
@@ -101,6 +88,40 @@
       <button id="get-random-candidates-btn" class="action-btn">Get Random Candidates</button>
       <div id="gdh-candidates-list" class="pane-section"></div>
     </div>
+  
+    <div id="geodesignhub_migration_cont" class="pane" hidden>
+      <div class="pane-title">Migrate Diagrams to Geodesignhub</div>
+      <br> <label for="gdh-project-id">Project ID</label>
+      <input type="text" placeholder="Geodesignhub Project ID.." id="gdh-project-id" name="gdh-project-id">
+      <label for="gdh-api-token">API Token</label>
+      <input type="text" placeholder="Geodesignhub API Token.." id="gdh-api-token" name="gdh-api-token">
+      <br><br>
+      <button class="action-btn" id="verify-gdh-creds-btn">Verify Credentials</button>
+      <span>&nbsp;&nbsp;</span>
+      <button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
+      <pre id="gdh-console"></pre>
+    </div>
+    
+  
+    <div id="geodesignhub_to_gpl_migration_design_team_selection_cont" class="pane" hidden>
+      <div class="pane-title">Migrate Designs from Geodesignhub: Select Design Team</div>
+      
+      <select id="geodesignhub-teams-list"></select>
+      <button id="geodesignhub-team-selection-btn" class="action-btn">select</button>
+      
+    </div>
+    
+  
+    <div id="geodesignhub_to_gpl_migration_cont" class="pane" hidden>
+      <div class="pane-title">Migrate Designs from Geodesignhub: Select Design</div>
+      
+      
+      <select id="geodesignhub-team-design-list"></select>
+      
+      <button id="geodesignhub-migrate-selected-gdh-desig-btn" class="action-btn">Migrate Design to GeoPlanner</button>
+      <pre id="gdh-design-migration-console"></pre>
+    </div>
+    
   
   
   </body>

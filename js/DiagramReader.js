@@ -20,7 +20,7 @@ class DiagramReader extends EventTarget {
 
   static CONFIG = {
     PORTAL_URL: "https://www.arcgis.com",
-    OAUTH_APP_ID: "PZdAgiu187TroTCX"
+    OAUTH_APP_ID: "ScgcXXJeR4NDyitK"
   };
 
   /**
