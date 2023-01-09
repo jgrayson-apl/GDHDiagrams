@@ -19,8 +19,9 @@ import DiagramReaderUI from './DiagramReaderUI.js';
 class DiagramReader extends EventTarget {
 
   static CONFIG = {
-    PORTAL_URL: "https://www.arcgis.com",
-    OAUTH_APP_ID: "ScgcXXJeR4NDyitK"
+    PORTAL_URL: "https://www.arcgis.com/",
+    //OAUTH_APP_ID: "ScgcXXJeR4NDyitK"  // HB //
+    OAUTH_APP_ID: "PZdAgiu187TroTCX"    // JG //
   };
 
   /**
@@ -127,33 +128,67 @@ class DiagramReader extends EventTarget {
               const sourceScenarioFilter = `(Geodesign_ProjectID = '${ projectID }') AND (Geodesign_ScenarioID = '${ sourceScenarioID }')`;
               console.info("Source Scenario Filter: ", sourceScenarioFilter);
 
-              //
-              // GET THE FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
-              //  - esri/request IS A GENERIC METHOD TO MAKE DIRECT WEB CALLS BUT WILL HANDLE ESRI SPECIFIC USE-CASES
-              //      DOC: https://developers.arcgis.com/javascript/latest/api-reference/esri-request.html
-              //  - HERE WE USE IT TO MAKE A DIRECT CALL TO THE QUERY REST ENDPOINT OF THE FEATURE LAYER
-              //
+              // QUERY REST ENDPOINT //
               const geoPlannerScenarioLayerQueryUrl = `${ this.sourcePortalItem.url }/${ this.interventionLayerId }/query`;
+              // QUERY WHERE CLAUSE //
+              const queryWhereClause = `${ sourceScenarioFilter } AND (Intervention_System <> 'NA')`;
+
+              //
+              // TODO: CHECK FOR MAXIMUM NUMBER OF FEATURES EXCEEDED
+              //       AND IF SO WE'LL NEED TO ITERATIVELY RETRIEVE THE
+              //       FULL LIST OF FEATURES BY MAKING MULTIPLE REQUESTS
+              //
+              //
               esriRequest(geoPlannerScenarioLayerQueryUrl, {
                 query: {
-                  where: `${ sourceScenarioFilter } AND (Intervention_System <> 'NA')`,
-                  outFields: '*',
-                  f: 'geojson'
+                  returnCountOnly: "true",
+                  where: queryWhereClause,
+                  f: 'json'
                 }
-              }).then((response) => {
-                const {features} = response.data;
-                //console.info("GeoJSON features via esriRequest(): ", features);
-
-                // GEOPLANNER SOURCE SCENARIO FEATURES //
-                this.sourceScenarioFeaturesGeoJSON = features;
+              }).then(({data: {count}}) => {
+                //
+                // MAXIMUM NUMBER OF FEATURES THAT MATCH OUR QUERY FILTER //
+                //
+                const maxFeatureCount = count;
 
                 //
-                // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
+                // GET THE FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
+                //  - esri/request IS A GENERIC METHOD TO MAKE DIRECT WEB CALLS BUT WILL HANDLE ESRI SPECIFIC USE-CASES
+                //      DOC: https://developers.arcgis.com/javascript/latest/api-reference/esri-request.html
+                //  - HERE WE USE IT TO MAKE A DIRECT CALL TO THE QUERY REST ENDPOINT OF THE FEATURE LAYER
                 //
-                const diagramBySystemsGeoJSON = this.diagramReaderUI.displayFeaturesList(this.sourceScenarioFeaturesGeoJSON);
+                //  - NOTE: CURRENTLY ALSO FILTERING OUT FEATURES WITH 'NA' IN THE SYSTEM FIELD
+                //          AND NOT SURE WE'LL ALWAYS NEED THIS..
+                //
+                esriRequest(geoPlannerScenarioLayerQueryUrl, {
+                  query: {
+                    returnExceededLimitFeatures: true,  // ASK FOR ADDITIONAL FEATURES TO BE RETURNED - MIGHT WORK DEPENDING ON SEVERAL SERVICE SETTINGS.
+                    where: queryWhereClause,
+                    outFields: '*',
+                    f: 'geojson'
+                  }
+                }).then((response) => {
 
+                  // GEOJSON FEATURES //
+                  const {features} = response.data;
+                  //console.info("GeoJSON features via esriRequest(): ", features);
 
-                this.dispatchEvent(new CustomEvent('geoplanner-features', {detail: {sourceScenarioFeaturesGeoJSON: this.sourceScenarioFeaturesGeoJSON}}));
+                  //
+                  // DID WE EXCEED THE MAXIMUM NUMBER OF FEATURES ALLOWED BY THE SERVICE?
+                  //
+                  console.assert(features.length <= maxFeatureCount, 'Exceeded maximum limit of features');
+
+                  // GEOPLANNER SOURCE SCENARIO FEATURES //
+                  this.sourceScenarioFeaturesGeoJSON = features;
+
+                  //
+                  // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
+                  //
+                  const diagramBySystemsGeoJSON = this.diagramReaderUI.displayFeaturesList(this.sourceScenarioFeaturesGeoJSON);
+
+                  this.dispatchEvent(new CustomEvent('geoplanner-features', {detail: {sourceScenarioFeaturesGeoJSON: this.sourceScenarioFeaturesGeoJSON}}));
+
+                });
 
               });
             });
@@ -295,7 +330,6 @@ class DiagramReader extends EventTarget {
       }).catch(reject);
     });
   }
-
 
   /**
    *
