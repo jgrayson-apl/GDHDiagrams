@@ -18,6 +18,13 @@ import DiagramReaderUI from './DiagramReaderUI.js';
 
 class DiagramReader extends EventTarget {
 
+  /**
+   *
+   * NOTE: HERE WE CAN MAINTAIN BOTH APP IDS AND WE CAN
+   *       SWITCH LOCALLY WHILE TESTING...
+   *
+   * @type {{OAUTH_APP_ID: string, PORTAL_URL: string}}
+   */
   static CONFIG = {
     PORTAL_URL: "https://www.arcgis.com/",
     //OAUTH_APP_ID: "ScgcXXJeR4NDyitK"  // HB //
