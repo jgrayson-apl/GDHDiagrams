@@ -175,7 +175,7 @@ class DiagramReader extends EventTarget {
                   // GEOJSON FEATURES //
                   const {features} = response.data;
 
-                  // AGGREGATE FEATURES //
+                  // AGGREGATED FEATURES //
                   allFeatures.push(...features);
 
                   // DO WE NEED TO RETRIEVE MORE FEATURES? //
