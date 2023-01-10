@@ -119,6 +119,83 @@ class DiagramReader extends EventTarget {
             });
 
             //
+            // Query (Feature Service/Layer)
+            //
+            // https://developers.arcgis.com/rest/services-reference/enterprise/query-feature-service-layer-.htm
+            //
+
+            /**
+             *
+             * GET MAXIMUM NUMBER OF FEATURES THAT MATCH OUR QUERY FILTER
+             *
+             * @param {string} queryUrl
+             * @param {string} queryFilter
+             * @returns {Promise<{maxFeatureCount:number}>}
+             * @private
+             */
+            const _getFeatureCount = ({queryUrl, queryFilter}) => {
+              return new Promise((resolve, reject) => {
+                esriRequest(queryUrl, {
+                  query: {
+                    returnCountOnly: true,
+                    where: queryFilter,
+                    f: 'json'
+                  }
+                }).then(({data: {count}}) => {
+                  //
+                  // MAXIMUM NUMBER OF FEATURES THAT MATCH OUR QUERY FILTER //
+                  //
+                  resolve({maxFeatureCount: count});
+                });
+              });
+            };
+
+            /**
+             *
+             * ITERATIVELY RETRIEVE ALL FEATURES
+             *
+             * @param {string} queryUrl
+             * @param {string} queryFilter
+             * @param {number} startOffset
+             * @param {number} maxFeatureCount
+             * @param {Graphic[]} allFeatures
+             * @returns {Promise<{features:Graphic[]}>}
+             * @private
+             */
+            const _getAllFeatures = ({queryUrl, queryFilter, startOffset, maxFeatureCount, allFeatures = []}) => {
+              return new Promise((resolve, reject) => {
+                esriRequest(queryUrl, {
+                  query: {
+                    resultOffset: startOffset,
+                    where: queryFilter,
+                    outFields: '*',
+                    f: 'geojson'
+                  }
+                }).then((response) => {
+                  // GEOJSON FEATURES //
+                  const {features} = response.data;
+
+                  // AGGREGATE FEATURES //
+                  allFeatures.push(...features);
+
+                  // DO WE NEED TO RETRIEVE MORE FEATURES? //
+                  if (allFeatures.length < maxFeatureCount) {
+                    _getAllFeatures({
+                      queryUrl,
+                      queryFilter,
+                      startOffset: allFeatures.length,
+                      maxFeatureCount,
+                      allFeatures
+                    }).then(resolve).catch(reject);
+                  } else {
+                    // WE HAVE THEM ALL //
+                    resolve({features: allFeatures});
+                  }
+                });
+              });
+            };
+
+            //
             // WHEN PORTAL ITEM IS SELECTED //
             // UI STUFF //
             //
@@ -141,22 +218,12 @@ class DiagramReader extends EventTarget {
               const queryWhereClause = `${ sourceScenarioFilter } AND (Intervention_System <> 'NA')`;
 
               //
-              // TODO: CHECK FOR MAXIMUM NUMBER OF FEATURES EXCEEDED
-              //       AND IF SO WE'LL NEED TO ITERATIVELY RETRIEVE THE
-              //       FULL LIST OF FEATURES BY MAKING MULTIPLE REQUESTS
+              // GET MAXIMUM NUMBER OF FEATURES THAT MATCH OUR QUERY FILTER
               //
-              //
-              esriRequest(geoPlannerScenarioLayerQueryUrl, {
-                query: {
-                  returnCountOnly: "true",
-                  where: queryWhereClause,
-                  f: 'json'
-                }
-              }).then(({data: {count}}) => {
-                //
-                // MAXIMUM NUMBER OF FEATURES THAT MATCH OUR QUERY FILTER //
-                //
-                const maxFeatureCount = count;
+              _getFeatureCount({
+                queryUrl: geoPlannerScenarioLayerQueryUrl,
+                queryFilter: queryWhereClause
+              }).then(({maxFeatureCount}) => {
 
                 //
                 // GET THE FEATURES AS GEOJSON DIRECTLY FROM THE REST ENDPOINT //
@@ -165,24 +232,21 @@ class DiagramReader extends EventTarget {
                 //  - HERE WE USE IT TO MAKE A DIRECT CALL TO THE QUERY REST ENDPOINT OF THE FEATURE LAYER
                 //
                 //  - NOTE: CURRENTLY ALSO FILTERING OUT FEATURES WITH 'NA' IN THE SYSTEM FIELD
-                //          AND NOT SURE WE'LL ALWAYS NEED THIS..
+                //          AND NOT SURE IF WE'LL ALWAYS NEED THIS...
                 //
-                esriRequest(geoPlannerScenarioLayerQueryUrl, {
-                  query: {
-                    returnExceededLimitFeatures: true,  // ASK FOR ADDITIONAL FEATURES TO BE RETURNED - MIGHT WORK DEPENDING ON SEVERAL SERVICE SETTINGS.
-                    where: queryWhereClause,
-                    outFields: '*',
-                    f: 'geojson'
-                  }
-                }).then((response) => {
-
-                  // GEOJSON FEATURES //
-                  const {features} = response.data;
-                  //console.info("GeoJSON features via esriRequest(): ", features);
+                _getAllFeatures({
+                  queryUrl: geoPlannerScenarioLayerQueryUrl,
+                  queryFilter: queryWhereClause,
+                  startOffset: 0,
+                  maxFeatureCount
+                }).then(({features}) => {
 
                   //
                   // DID WE EXCEED THE MAXIMUM NUMBER OF FEATURES ALLOWED BY THE SERVICE?
                   //
+                  // - NOTE: THIS SHOULD NO LONGER HAPPEN...
+                  //
+                  console.info(`${ features.length } of ${ maxFeatureCount }`);
                   console.assert(features.length <= maxFeatureCount, 'Exceeded maximum limit of features');
 
                   // GEOPLANNER SOURCE SCENARIO FEATURES //
@@ -196,8 +260,8 @@ class DiagramReader extends EventTarget {
                   this.dispatchEvent(new CustomEvent('geoplanner-features', {detail: {sourceScenarioFeaturesGeoJSON: this.sourceScenarioFeaturesGeoJSON}}));
 
                 });
-
               });
+
             });
 
             resolve({portal});
