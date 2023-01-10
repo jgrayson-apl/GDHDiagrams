@@ -162,7 +162,7 @@ class DiagramReader extends EventTarget {
              * @returns {Promise<{features:Graphic[]}>}
              * @private
              */
-            const _getAllFeatures = ({queryUrl, queryFilter, startOffset =0, maxFeatureCount, allFeatures = []}) => {
+            const _getAllFeatures = ({queryUrl, queryFilter, startOffset = 0, maxFeatureCount, allFeatures = []}) => {
               return new Promise((resolve, reject) => {
                 esriRequest(queryUrl, {
                   query: {
