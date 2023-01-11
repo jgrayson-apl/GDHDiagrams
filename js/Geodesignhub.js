@@ -488,8 +488,8 @@ function migrateIGCDiagrams() {
         // Assign Diagram Tags 
         if (gdhRelevantTagIDs.length > 0) {
           let diagramID = diagram_data['diagram_id'];
-          let postJSON = gdhRelevantTagIDs;
-          gdhAssignDiagramTags(gdhProjectID, gdhApiToken, diagramID, postJSON).then(tagsAssigned => {
+          
+          gdhAssignDiagramTags(gdhProjectID, gdhApiToken, diagramID, gdhRelevantTagIDs).then(tagsAssigned => {
             consoleElement.innerHTML = "Climate Actions successfully assigned to migrated Diagram.."
           })
             .catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
