@@ -232,6 +232,20 @@ const gdhAssignDiagramTags = (projectID, apiToken, diagramID, postJson) => {
 
 };
 
+const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPolicy, postJson) => {
+
+  return fetchResource(`projects/${projectID}/systems/${systemID}/add/${projectOrPolicy}/`,
+    {
+      method: 'POST',
+      headers: {
+        "Authorization": `Token ${apiToken}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify(postJson)
+    });
+
+};
+
 const gdhAssignTagsToDiagram = (projectID, apiToken, systemID, projectOrPolicy, postJson) => {
 
   return fetchResource(`projects/${projectID}/systems/${systemID}/add/${projectOrPolicy}/`,
@@ -449,7 +463,7 @@ function migrateIGCDiagrams() {
   consoleElement.innerHTML = '';
   const gdhApiToken = document.getElementById("gdh-api-token").value;
   const gdhProjectID = document.getElementById("gdh-project-id").value;
-  // console.log(_sourceScenarioFeaturesGeoJSON)
+  console.log(_sourceScenarioFeaturesGeoJSON)
   let source_diagrams_len = _sourceScenarioFeaturesGeoJSON.length;
   for (let index = 0; index < source_diagrams_len; index++) {
     const current_diagram_details = _sourceScenarioFeaturesGeoJSON[index];
