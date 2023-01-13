@@ -328,7 +328,10 @@ class DiagramReader extends EventTarget {
   _findGeoPlannerGroups({portal}) {
     return new Promise((resolve, reject) => {
 
-      // ASK PORTAL TO FIND GEOPLANNER GROUPS //
+      /**
+       * ASK PORTAL TO FIND GEOPLANNER GROUPS
+       * - groups with IGC in the title and these tags: geodesign | geodesignScenario
+       */
       portal.queryGroups({
         query: 'title:IGC tags:(geodesign AND geodesignProject)',
         sortField: 'modified',
@@ -340,6 +343,43 @@ class DiagramReader extends EventTarget {
         this.diagramReaderUI.geoPlannerProjectGroups = results;
 
         resolve({geoPlannerGroups: results});
+      }).catch(reject);
+    });
+  }
+
+  /**
+   *
+   * https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalGroup.html
+   *
+   * @param {PortalGroup} portalGroup
+   * @returns {Promise<PortalItem[]>}
+   * @private
+   */
+  _getPortalItemsList({portalGroup}) {
+    return new Promise((resolve, reject) => {
+
+      /**
+       * https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalGroup.html#queryItems
+       *
+       * ASK PORTAL TO RETURN PORTAL ITEMS
+       *  - group items with these tags: geodesign | geodesignScenario
+       *
+       */
+      portalGroup.queryItems({
+        query: 'tags:(geodesign AND geodesignScenario)',
+        sortField: 'modified',
+        sortOrder: 'desc',
+        num: 100
+      }).then(({results}) => {
+
+        // LAYER PORTAL ITEMS //
+        // - A PORTAL ITEM REPRESENTS THE SIMPLE METADATA ABOUT A GIS THING (MAP, LAYER, ETC...)
+        //   AND IN THIS CASE WE'RE JUST INTERESTED IN THE FEATURE LAYERS...
+        const layerPortalItems = results.filter(item => item.isLayer);
+
+        this.diagramReaderUI.geoPlannerProjectGroupItems = layerPortalItems;
+
+        resolve({layerPortalItems});
       }).catch(reject);
     });
   }
@@ -360,43 +400,6 @@ class DiagramReader extends EventTarget {
         const geoPlannerFolder = userFolders.find(folder => folder.title === geoPlannerFolderName);
 
         resolve({portalFolder: geoPlannerFolder});
-      }).catch(reject);
-    });
-  }
-
-  /**
-   *
-   * https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalGroup.html
-   *
-   * @param {PortalGroup} portalGroup
-   * @returns {Promise<PortalItem[]>}
-   * @private
-   */
-  _getPortalItemsList({portalGroup}) {
-    return new Promise((resolve, reject) => {
-
-      /**
-       * https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalGroup.html#queryItems
-       *
-       * ASK PORTAL TO RETURN PORTAL ITEMS
-       *  - items with these tags: IGC | geodesign | geodesignScenario
-       *
-       */
-      portalGroup.queryItems({
-        query: 'tags:(geodesign AND geodesignScenario)',
-        sortField: 'modified',
-        sortOrder: 'desc',
-        num: 100
-      }).then(({results}) => {
-
-        // LAYER PORTAL ITEMS //
-        // - A PORTAL ITEM REPRESENTS THE SIMPLE METADATA ABOUT A GIS THING (MAP, LAYER, ETC...)
-        //   AND IN THIS CASE WE'RE JUST INTERESTED IN THE FEATURE LAYERS...
-        const layerPortalItems = results.filter(item => item.isLayer);
-
-        this.diagramReaderUI.geoPlannerProjectGroupItems = layerPortalItems;
-
-        resolve({layerPortalItems});
       }).catch(reject);
     });
   }
@@ -459,7 +462,7 @@ class DiagramReader extends EventTarget {
           //
           // SUGGESTION: USE NEW DESIGN NAME AS THE PORTAL ITEM TITLE BELOW
           //             ALSO, WE CAN USE THE DESCRIPTION TO ADD ANY OTHER
-          //             DESIGN RELATED METADATA IN THE DESCRIPTION
+          //             DESIGN RELATED METADATA
           //
           const newPortalItem = new PortalItem({
             type: this.sourcePortalItem.type,
@@ -567,7 +570,11 @@ class DiagramReader extends EventTarget {
       diagramAttributes.Geodesign_ScenarioID = scenarioID;
 
       // ...WHEN AVAILABLE WE'LL MAINTAIN THE OBJECTID IN SOME OTHER FIELD... //
-      //diagramAttributes.SOURCEID = diagramAttributes.OBJECTID;
+      //diagramAttributes.SourceOID = diagramAttributes.OBJECTID;
+
+      //
+      // TODO: DO DELETE ALL OTHER KPI-BASED ATTRIBUTES OR LEAVE THEM AS-IS? //
+      //
 
       // DELETE SYSTEM FIELDS //
       delete diagramAttributes.Shape__Area;
