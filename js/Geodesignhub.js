@@ -232,6 +232,20 @@ const gdhAssignDiagramTags = (projectID, apiToken, diagramID, postJson) => {
 
 };
 
+const gdhAssignDiagramNotes = (projectID, apiToken, diagramID, postJson) => {
+
+  return fetchResource(`projects/${projectID}/diagrams/${diagramID}/notes/`,
+    {
+      method: 'POST',
+      headers: {
+        "Authorization": `Token ${apiToken}`,
+        "content-type": "application/json"
+      },
+      body: JSON.stringify(postJson)
+    });
+
+};
+
 const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPolicy, postJson) => {
 
   return fetchResource(`projects/${projectID}/systems/${systemID}/add/${projectOrPolicy}/`,
@@ -246,19 +260,6 @@ const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPol
 
 };
 
-const gdhAssignTagsToDiagram = (projectID, apiToken, systemID, projectOrPolicy, postJson) => {
-
-  return fetchResource(`projects/${projectID}/systems/${systemID}/add/${projectOrPolicy}/`,
-    {
-      method: 'POST',
-      headers: {
-        "Authorization": `Token ${apiToken}`,
-        "content-type": "application/json"
-      },
-      body: JSON.stringify(postJson)
-    });
-
-};
 // Get dom nodes
 
 const consoleElement = document.querySelector('#gdh-console');
@@ -463,7 +464,7 @@ function migrateIGCDiagrams() {
   consoleElement.innerHTML = '';
   const gdhApiToken = document.getElementById("gdh-api-token").value;
   const gdhProjectID = document.getElementById("gdh-project-id").value;
-  console.log(_sourceScenarioFeaturesGeoJSON)
+
   let source_diagrams_len = _sourceScenarioFeaturesGeoJSON.length;
   for (let index = 0; index < source_diagrams_len; index++) {
     const current_diagram_details = _sourceScenarioFeaturesGeoJSON[index];
@@ -487,6 +488,12 @@ function migrateIGCDiagrams() {
       break;
     }
 
+    let gplOriginalObjectID = { 'notes': 0 }
+    if (current_diagram_details.properties.hasOwnProperty("OBJECTID")) {
+      gplOriginalObjectID['notes'] = current_diagram_details.properties.OBJECTID;
+    }
+
+
     let gdhRelevantTagIDs = [];
     if (useIGCSpecificBridgeExtensions) {
       gdhRelevantTagIDs = gdhGPLActionsConverter([gplInterventionName]);
@@ -494,15 +501,16 @@ function migrateIGCDiagrams() {
 
     if (gdhSystemID !== 0) {
       gdhMigrateDiagramsToProject(gdhProjectID, gdhApiToken, gdhSystemID, 'project', postJson).then(diagram_data => {
-        consoleElement.innerHTML = `<div>${JSON.stringify(data, null, 2)}</div>${consoleElement.innerHTML}`;
+        consoleElement.innerHTML = `<div>${JSON.stringify(diagram_data, null, 2)}</div>${consoleElement.innerHTML}`;
         // Reset button text
         this.innerHTML = buttonText;
         return diagram_data
       }).then(diagram_data => {
         // Assign Diagram Tags 
+          const dd = JSON.parse(diagram_data);
+          let diagramID = dd['diagram_id'];
         if (gdhRelevantTagIDs.length > 0) {
-          let diagramID = diagram_data['diagram_id'];
-          
+
           gdhAssignDiagramTags(gdhProjectID, gdhApiToken, diagramID, gdhRelevantTagIDs).then(tagsAssigned => {
             consoleElement.innerHTML = "Climate Actions successfully assigned to migrated Diagram.."
           })
@@ -510,11 +518,19 @@ function migrateIGCDiagrams() {
         }
         // Assign GPL Object ID 
 
+        if (gplOriginalObjectID['notes'] !== 0) {
+          gdhAssignDiagramNotes(gdhProjectID, gdhApiToken, diagramID, gplOriginalObjectID).then(notesUpdated => {
+            consoleElement.innerHTML = "Diagram notes updated.."
+          })
+            .catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
+        }
+
       }).catch(error => {
         consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
         // Reset button text
         this.innerHTML = buttonText;
       });
+
     }
   }
 }
