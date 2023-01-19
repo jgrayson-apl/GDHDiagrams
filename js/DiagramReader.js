@@ -156,9 +156,9 @@ class DiagramReader extends EventTarget {
              *
              * @param {string} queryUrl
              * @param {string} queryFilter
-             * @param {number} startOffset
+             * @param {number} [startOffset]
              * @param {number} maxFeatureCount
-             * @param {Graphic[]} allFeatures
+             * @param {Graphic[]} [allFeatures]
              * @returns {Promise<{features:Graphic[]}>}
              * @private
              */
@@ -204,8 +204,8 @@ class DiagramReader extends EventTarget {
               this.sourcePortalItem = portalItem;
 
               // GET RPOJECT ID FROM TYPEKEYWORD //
-              const projectIDkeyword = this.sourcePortalItem.typeKeywords.find(keyword => keyword.startsWith('geodesignProjectID'));
-              const projectID = projectIDkeyword.replace(/geodesignProjectID/, '');
+              const projectIDKeyword = this.sourcePortalItem.typeKeywords.find(keyword => keyword.startsWith('geodesignProjectID'));
+              const projectID = projectIDKeyword.replace(/geodesignProjectID/, '');
 
               // SOURCE SCENARIO FILTER //
               const sourceScenarioID = this.sourcePortalItem.id;
@@ -215,7 +215,7 @@ class DiagramReader extends EventTarget {
               // QUERY REST ENDPOINT //
               const geoPlannerScenarioLayerQueryUrl = `${ this.sourcePortalItem.url }/${ this.interventionLayerId }/query`;
               // QUERY WHERE CLAUSE //
-              const queryWhereClause = `${ sourceScenarioFilter } AND (Intervention_System <> 'NA')`;
+              const queryWhereClause = `${ sourceScenarioFilter } AND (ACTION_IDS IS NOT NULL)`;
 
               //
               // GET MAXIMUM NUMBER OF FEATURES THAT MATCH OUR QUERY FILTER
@@ -245,7 +245,7 @@ class DiagramReader extends EventTarget {
                   //
                   // - NOTE: THIS SHOULD NO LONGER HAPPEN...
                   //
-                  console.info(`${ features.length } of ${ maxFeatureCount }`);
+                  console.info(`Features found: ${ features.length } of ${ maxFeatureCount }`);
                   console.assert(features.length <= maxFeatureCount, 'Exceeded maximum limit of features');
 
                   // GEOPLANNER SOURCE SCENARIO FEATURES //
@@ -254,9 +254,13 @@ class DiagramReader extends EventTarget {
                   //
                   // DIAGRAM FEATURES ORGANIZED BY SYSTEM //
                   //
-                  const diagramBySystemsGeoJSON = this.diagramReaderUI.displayFeaturesList(this.sourceScenarioFeaturesGeoJSON);
+                  this.diagramReaderUI.displayFeaturesList(this.sourceScenarioFeaturesGeoJSON);
 
-                  this.dispatchEvent(new CustomEvent('geoplanner-features', {detail: {sourceScenarioFeaturesGeoJSON: this.sourceScenarioFeaturesGeoJSON}}));
+                  this.dispatchEvent(new CustomEvent('geoplanner-features', {
+                    detail: {
+                      sourceScenarioFeaturesGeoJSON: this.sourceScenarioFeaturesGeoJSON
+                    }
+                  }));
 
                 });
               });
@@ -464,12 +468,14 @@ class DiagramReader extends EventTarget {
           //             ALSO, WE CAN USE THE DESCRIPTION TO ADD ANY OTHER
           //             DESIGN RELATED METADATA
           //
+          //
+          //
           const newPortalItem = new PortalItem({
             type: this.sourcePortalItem.type,
             url: this.sourcePortalItem.url,
             title: `${ this.sourcePortalItem.title } - GDH Design [${ (new Date()).valueOf() }]`,
-            snippet: `${ this.sourcePortalItem.snippet } - GDH Design`,
-            description: `${ this.sourcePortalItem.description } - GDH Design`,
+            snippet: `${ this.sourcePortalItem.snippet || '' } - GDH Negotiated Design`,
+            description: `${ this.sourcePortalItem.description || '' } - The GDH negotiated design.`,
             accessInformation: this.sourcePortalItem.accessInformation,
             typeKeywords: this.sourcePortalItem.typeKeywords, // THE PROJECT ID WILL BE IN ONE OF THE TYPEKEYWORDS
             tags: this.sourcePortalItem.tags.concat('GDH')    // ADD GDH TAG TO IDENTIFY WHICH SCENARIOS CAME FROM GDH
@@ -570,18 +576,18 @@ class DiagramReader extends EventTarget {
       diagramAttributes.Geodesign_ScenarioID = scenarioID;
 
       // ...WHEN AVAILABLE WE'LL MAINTAIN THE OBJECTID IN SOME OTHER FIELD... //
-      //diagramAttributes.SourceOID = diagramAttributes.OBJECTID;
+      diagramAttributes.SOURCE_ID = diagramAttributes.GLOBALID;
 
       //
       // TODO: DO DELETE ALL OTHER KPI-BASED ATTRIBUTES OR LEAVE THEM AS-IS? //
       //
 
-      // DELETE SYSTEM FIELDS //
-      delete diagramAttributes.Shape__Area;
-      delete diagramAttributes.Shape__Length;
       // - NEW OBJECTID AND GLOBALID WILL BE ASSIGNED BY FEATURE LAYER WHEN ADDED //
       delete diagramAttributes.OBJECTID;
       delete diagramAttributes.GLOBALID;
+      // DELETE SYSTEM FIELDS //
+      delete diagramAttributes.Shape__Area;
+      delete diagramAttributes.Shape__Length;
 
       return diagramFeature;
     });

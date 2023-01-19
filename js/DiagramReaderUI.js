@@ -154,12 +154,8 @@ class DiagramReaderUI extends EventTarget {
    * DISPLAY LIST OF FEATURES
    *
    * @param {{}[]} features scenario or design features as GeoJSON
-   * @returns {Map<string, Graphic[]>} features/diagrams organized by system
-   * @private
    */
   displayFeaturesList(features) {
-
-    const diagramBySystems = new Map();
 
     const diagramItems = features.map(diagramFeature => {
 
@@ -173,34 +169,23 @@ class DiagramReaderUI extends EventTarget {
       const {
         Geodesign_ProjectID,
         Geodesign_ScenarioID,
-        Intervention_System,
-        Intervention_Type
+        ACTION_IDS
       } = diagramAttributes;
 
       // FEATURE/DIAGRAM ITEM //
       const diagramItem = document.createElement('div');
       diagramItem.classList.add('diagram-item');
-      diagramItem.innerHTML = `[ ${ oid } ] ${ Intervention_System } | ${ Intervention_Type }`;
+      diagramItem.innerHTML = `[ ${ oid } ] ${ ACTION_IDS }`;
       diagramItem.title = JSON.stringify(diagramFeature, null, 2);
 
       const geometryParts = diagramFeature.geometry.coordinates || diagramFeature.geometry.rings;
       const isMultiPartGeometry = (geometryParts.length > 1);
       isMultiPartGeometry && diagramItem.classList.add('multipart');
 
-      //
-      // ORGANIZE FEATURES/DIAGRAMS BY SYSTEM //
-      // - JUST SIMPLE BINNING BY SYSTEM...
-      //
-      const diagramBySystem = diagramBySystems.get(Intervention_System) || [];
-      diagramBySystem.push(diagramFeature);
-      diagramBySystems.set(Intervention_System, diagramBySystem);
-
       return diagramItem;
     });
     // ADD DIAGRAMS TO LIST //
     this.gdhDiagramsList.replaceChildren(...diagramItems);
-
-    return diagramBySystems;
   }
 
 }
