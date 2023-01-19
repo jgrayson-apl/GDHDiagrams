@@ -4,6 +4,55 @@
 // ------------------------------------------------------ //
 
 /**
+ *
+ * CLIMATE ACTIONS DETAILS
+ *
+ * @type {{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string}[]}
+ */
+const CLIMATE_ACTIONS = [
+  {
+    actionCode: '1.3.4',
+    actionName: 'Natural gas power plant closure',
+    policyCode: '1.3',
+    policyName: 'Close fossil energy generators',
+    systemCode: '1',
+    systemName: 'Energy'
+  },
+  {
+    actionCode: '1.4.1',
+    actionName: 'Solar photovoltaics',
+    policyCode: '1.4',
+    policyName: 'Substitute with renewable energy systems',
+    systemCode: '1',
+    systemName: 'Energy'
+  },
+  {
+    actionCode: '1.4.3',
+    actionName: 'Wind power',
+    policyCode: '1.4',
+    policyName: 'Substitute with renewable energy systems',
+    systemCode: '1',
+    systemName: 'Energy'
+  },
+  {
+    actionCode: '3.1.11',
+    actionName: 'Forest protection',
+    policyCode: '3.1',
+    policyName: 'Manage forests sustainably',
+    systemCode: '3',
+    systemName: 'Forests, Peatlands, and Grasslands'
+  },
+  {
+    actionCode: '3.1.12',
+    actionName: 'Forest restoration',
+    policyCode: '3.1',
+    policyName: 'Manage forests sustainably',
+    systemCode: '3',
+    systemName: 'Forests, Peatlands, and Grasslands'
+  }
+];
+
+/**
  * DIAGRAM READER
  */
 import DiagramReader from './DiagramReader.js';
@@ -493,52 +542,7 @@ function arcGISOnlineSignIn() {
         const gdhDesignMigrationSelectionCont = document.getElementById('geodesignhub_to_gpl_migration_cont');
         gdhDesignMigrationSelectionCont.removeAttribute("hidden");
 
-        /**
-         *
-         * @type {{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string}[]}
-         */
-        const CLIMATE_ACTIONS = [
-          {
-            actionCode: '1.3.4',
-            actionName: 'Natural gas power plant closure',
-            policyCode: '1.3',
-            policyName: 'Close fossil energy generators',
-            systemCode: '1',
-            systemName: 'Energy'
-          },
-          {
-            actionCode: '1.4.1',
-            actionName: 'Solar photovoltaics',
-            policyCode: '1.4',
-            policyName: 'Substitute with renewable energy systems',
-            systemCode: '1',
-            systemName: 'Energy'
-          },
-          {
-            actionCode: '1.4.3',
-            actionName: 'Wind power',
-            policyCode: '1.4',
-            policyName: 'Substitute with renewable energy systems',
-            systemCode: '1',
-            systemName: 'Energy'
-          },
-          {
-            actionCode: '3.1.11',
-            actionName: 'Forest protection',
-            policyCode: '3.1',
-            policyName: 'Manage forests sustainably',
-            systemCode: '3',
-            systemName: 'Forests, Peatlands, and Grasslands'
-          },
-          {
-            actionCode: '3.1.12',
-            actionName: 'Forest restoration',
-            policyCode: '3.1',
-            policyName: 'Manage forests sustainably',
-            systemCode: '3',
-            systemName: 'Forests, Peatlands, and Grasslands'
-          }
-        ];
+
         /**
          *
          * @param {string} actionCode
@@ -567,7 +571,7 @@ function arcGISOnlineSignIn() {
             const actionsBySystem = bySystem.get(climateAction.systemCode) || [];
             // ADD ACTION TO LIST OF ACTIONS BY SYSTEM //
             actionsBySystem.push(climateAction.actionCode);
-            return bySystem.set(climateAction, actionsBySystem);
+            return bySystem.set(climateAction.systemCode, actionsBySystem);
           }, new Map());
 
           // CREATE ONE DIAGRAM FOR EACH SYSTEM //
