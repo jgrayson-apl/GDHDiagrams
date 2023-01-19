@@ -492,12 +492,113 @@ function arcGISOnlineSignIn() {
 
         const gdhDesignMigrationSelectionCont = document.getElementById('geodesignhub_to_gpl_migration_cont');
         gdhDesignMigrationSelectionCont.removeAttribute("hidden");
+
+        /**
+         *
+         * @type {{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string}[]}
+         */
+        const CLIMATE_ACTIONS = [
+          {
+            actionCode: '1.3.4',
+            actionName: 'Natural gas power plant closure',
+            policyCode: '1.3',
+            policyName: 'Close fossil energy generators',
+            systemCode: '1',
+            systemName: 'Energy'
+          },
+          {
+            actionCode: '1.4.1',
+            actionName: 'Solar photovoltaics',
+            policyCode: '1.4',
+            policyName: 'Substitute with renewable energy systems',
+            systemCode: '1',
+            systemName: 'Energy'
+          },
+          {
+            actionCode: '1.4.3',
+            actionName: 'Wind power',
+            policyCode: '1.4',
+            policyName: 'Substitute with renewable energy systems',
+            systemCode: '1',
+            systemName: 'Energy'
+          },
+          {
+            actionCode: '3.1.11',
+            actionName: 'Forest protection',
+            policyCode: '3.1',
+            policyName: 'Manage forests sustainably',
+            systemCode: '3',
+            systemName: 'Forests, Peatlands, and Grasslands'
+          },
+          {
+            actionCode: '3.1.12',
+            actionName: 'Forest restoration',
+            policyCode: '3.1',
+            policyName: 'Manage forests sustainably',
+            systemCode: '3',
+            systemName: 'Forests, Peatlands, and Grasslands'
+          }
+        ];
+        /**
+         *
+         * @param {string} actionCode
+         * @returns {string}
+         */
+        const getClimateAction = actionCode => {
+          const climateAction = CLIMATE_ACTIONS.find(action => {
+            return (action.actionCode === actionCode);
+          });
+          return climateAction;
+        };
+
+        //
+        // DECONSTRUCT FEATURES INTO DIAGRAMS
+        //
+        const diagrams = _sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {
+
+          // GET LIST OF ALL CLIMATE ACTIONS FOR EACH FEATURE //
+          const actions = feature.properties.ACTION_IDS.split('|');
+
+          // GROUP CLIMATE ACTIONS BY STSTEM //
+          const groupedActionsBySystem = actions.reduce((bySystem, action) => {
+            // GET CLIMATE ACTION DETAILS //
+            const climateAction = getClimateAction(action);
+            // GET LIST OF CLIMATE ACTIONS BY SYSTEM //
+            const actionsBySystem = bySystem.get(climateAction.systemCode) || [];
+            // ADD ACTION TO LIST OF ACTIONS BY SYSTEM //
+            actionsBySystem.push(climateAction.actionCode);
+            return bySystem.set(climateAction, actionsBySystem);
+          }, new Map());
+
+          // CREATE ONE DIAGRAM FOR EACH SYSTEM //
+          groupedActionsBySystem.forEach((climateActions, systemCode) => {
+            // DIAGRAM //
+            const newDiagram = {
+              id: (list.length + 1),
+              geometry: feature.geometry,
+              properties: {
+                OBJECTID: feature.properties.OBJECTID,
+                system: systemCode,
+                tags: climateActions
+              }
+            };
+            list.push(newDiagram);
+          });
+
+          return list;
+        }, []);
+
+        //
+        // FIRST PASS AT DISASSEMBLING A FEATURE INTO DIAGRAMS //
+        //
+        console.info(diagrams);
+
         //
         // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
         // BASED ON THE SYSTEM, PROJECT/POLICY, ETC... WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN
         // SOURCE SCENARIO FEATURES
         //
-        const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(sourceScenarioFeaturesGeoJSON);
+        const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(_sourceScenarioFeaturesGeoJSON);
 
         //
         // AFTER THE NEGOTIATIONS ARE COMPLETE WE NEED TO SEND THEM BACK AS A NEW GEOPLANNER SCENARIO
