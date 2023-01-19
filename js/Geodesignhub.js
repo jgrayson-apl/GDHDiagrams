@@ -88,6 +88,8 @@ const API_URL = 'http://local.test:9000/api/v1';
 let _gdhNegotiatedDesignJSON = null;
 // JG //
 let _sourceScenarioFeaturesGeoJSON = null;
+// JG //
+let _diagramsGeoJSON = null;
 
 let _allGDHSystems = null;
 
@@ -542,28 +544,29 @@ function arcGISOnlineSignIn() {
         const gdhDesignMigrationSelectionCont = document.getElementById('geodesignhub_to_gpl_migration_cont');
         gdhDesignMigrationSelectionCont.removeAttribute("hidden");
 
-
         /**
          *
          * @param {string} actionCode
          * @returns {string}
          */
         const getClimateAction = actionCode => {
-          const climateAction = CLIMATE_ACTIONS.find(action => {
+          return CLIMATE_ACTIONS.find(action => {
             return (action.actionCode === actionCode);
           });
-          return climateAction;
         };
 
         //
         // DECONSTRUCT FEATURES INTO DIAGRAMS
         //
-        const diagrams = _sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {
+        // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
+        // BASED ON THE SYSTEM. WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN SOURCE SCENARIO FEATURES
+        //
+        _diagramsGeoJSON = _sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {
 
           // GET LIST OF ALL CLIMATE ACTIONS FOR EACH FEATURE //
           const actions = feature.properties.ACTION_IDS.split('|');
 
-          // GROUP CLIMATE ACTIONS BY STSTEM //
+          // GROUP CLIMATE ACTIONS BY SYSTEM //
           const groupedActionsBySystem = actions.reduce((bySystem, action) => {
             // GET CLIMATE ACTION DETAILS //
             const climateAction = getClimateAction(action);
@@ -578,10 +581,11 @@ function arcGISOnlineSignIn() {
           groupedActionsBySystem.forEach((climateActions, systemCode) => {
             // DIAGRAM //
             const newDiagram = {
+              type: 'Feature',
               id: (list.length + 1),
               geometry: feature.geometry,
               properties: {
-                OBJECTID: feature.properties.OBJECTID,
+                ...feature.properties, // HERE WE COULD RESTRICT OF FILTER WHICH PROPERTIES/ATTRIBUTES MAINTAIN... //
                 system: systemCode,
                 tags: climateActions
               }
@@ -595,20 +599,13 @@ function arcGISOnlineSignIn() {
         //
         // FIRST PASS AT DISASSEMBLING A FEATURE INTO DIAGRAMS //
         //
-        console.info(diagrams);
+        console.info(_diagramsGeoJSON);
 
         //
-        // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
-        // BASED ON THE SYSTEM, PROJECT/POLICY, ETC... WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN
-        // SOURCE SCENARIO FEATURES
+        // SIMULATE NEGOTIATIONS BY SENDING BACK FIRST 10 DIAGRAMS //
         //
-        const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(_sourceScenarioFeaturesGeoJSON);
+        const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(_diagramsGeoJSON, 10);
 
-        //
-        // AFTER THE NEGOTIATIONS ARE COMPLETE WE NEED TO SEND THEM BACK AS A NEW GEOPLANNER SCENARIO
-        // WHICH CONSISTS OF A NEW FEATURE LAYER PORTAL ITEM (NOT A NEW SERVICE... JUST A NEW PORTAL
-        // ITEM WITH A DEFINITION EXPRESSION) AND NEW FEATURES INTO THE PROJECT FEATURE LAYER.
-        //
 
         // TESTING: DON'T TRANSFER ALL FEATURES OVER...
         const createNewGeoPlannerScenario = confirm('Create a new GeoPlanner Scenario?');
