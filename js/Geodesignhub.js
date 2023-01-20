@@ -676,12 +676,13 @@ function arcGISOnlineSignIn() {
         //
         // FIRST PASS AT DISASSEMBLING A FEATURE INTO DIAGRAMS //
         //
-        console.info(_diagramsGeoJSON);
+        // console.info(_diagramsGeoJSON);
 
         //
         // SIMULATE NEGOTIATIONS BY SENDING BACK FIRST 10 DIAGRAMS //
         //
         // const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(_diagramsGeoJSON, 10);
+        const designFeaturesAsEsriJSON = _gdhNegotiatedDesignJSON;
 
 
         // TESTING: DON'T TRANSFER ALL FEATURES OVER...
