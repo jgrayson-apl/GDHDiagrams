@@ -88,9 +88,10 @@ const API_URL = 'http://local.test:9000/api/v1';
 let _gdhNegotiatedDesignJSON = null;
 // JG //
 let _sourceScenarioFeaturesGeoJSON = null;
+let _diagramsGeoJSON  = null;
 const useIGCSpecificBridgeExtensions = 1;
 let _allGDHSystems = null;
-let _allGDHProjectTags = null;
+
 // Custom API error to throw
 function ApiError(message, data, status) {
   let response = null;
@@ -198,14 +199,6 @@ const fetchResource = (path, userOptions = {}) => {
 // this is a very naive implementation for demo purposes
 // ------------------------------------------------------ //
 
-// Define API calls
-const slugify = str =>
-  str
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 
 
 const gdhVerifyProjectCredentials = (projectID, apiToken) => {
@@ -268,9 +261,9 @@ const gdhGetDesignESRIJSON = (projectID, apiToken, designTeamID, designID) => {
     });
 };
 
-const gdhAssignDiagramTags = (projectID, apiToken, diagramID, postJson) => {
+const gdhAssignDiagramTagCodes = (projectID, apiToken, diagramID, postJson) => {
 
-  return fetchResource(`projects/${projectID}/diagrams/${diagramID}/tags/`,
+  return fetchResource(`projects/${projectID}/diagrams/${diagramID}/tags/codes/`,
     {
       method: 'POST',
       headers: {
@@ -349,7 +342,7 @@ function verifyCredentials() {
 
       } else {
         gdhVerifyProjectSystems(gdhProjectID, gdhApiToken).then(systemsData => {
-          const validSystemColors = [{'name': 'ENE', 'color': "#AB507E"}, {'name': 'AG', 'color': "#D9CD91"}, {'name': 'FOR', 'color': "#80BD75"}, {'name': 'OCN', 'color': "#8CCDD1"}, {'name': 'STL', 'color': "#E6564E"}, {'name': 'IND', 'color': "#916DA3"}, {'name': 'TRAN', 'color': "#706666"}, {'name': 'WAT', 'color': "#6B9CB0"}];
+          const validSystemColors = [{"gplSystemCode": 1, 'name': 'ENE', 'color': "#AB507E"}, {"gplSystemCode": 2, 'name': 'AG', 'color': "#D9CD91"}, {"gplSystemCode": 3, 'name': 'FOR', 'color': "#80BD75"}, {"gplSystemCode": 4, 'name': 'OCN', 'color': "#8CCDD1"}, {"gplSystemCode": 5, 'name': 'STL', 'color': "#E6564E"}, {"gplSystemCode": 6, 'name': 'IND', 'color': "#916DA3"}, {"gplSystemCode": 7, 'name': 'TRAN', 'color': "#706666"}, {"gplSystemCode": 8, 'name': 'WAT', 'color': "#6B9CB0"}];
 
           let allSysNameColorsFound = [];
           for (let x1 = 0; x1 < validSystemColors.length; x1++) {
@@ -388,11 +381,6 @@ function verifyCredentials() {
 
             }).catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
 
-            gdhGetProjectTags(gdhProjectID, gdhApiToken).then(tagsData => {
-              _allGDHProjectTags = tagsData;
-            }).catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
-
-
           } else {
 
             consoleElement.innerHTML = "Geodesignhub project is not setup correctly, please contact your administrator";
@@ -416,7 +404,8 @@ function verifyCredentials() {
 
 function gdhGPLSystemConverter(gplSystem) {
   // This function takes a "Intervention System" from Geoplanner and returns 
-  const gplGDHLookup = { 'Agricultural & Forestry': 'AG', 'Energy': 'ENE' };
+  const gplGDHLookup = {1:'ENE', 2: 'AG', 3: 'FOR',4: 'OCN', 5: 'STL', 6 :'IND', 7: 'TRAN', 8:'WAT'};  
+  
   let gdhSystemID = 0;
   if (gplGDHLookup.hasOwnProperty(gplSystem)) {
     let gdhSystemName = gplGDHLookup[gplSystem];
@@ -430,27 +419,6 @@ function gdhGPLSystemConverter(gplSystem) {
   }
 
   return gdhSystemID;
-}
-
-function gdhGPLActionsConverter(gplActions) {
-  // This function takes a Climate Action from GPL and returns relevant tags in Geodesignhub
-  let gdhTagIDs = [];
-  for (let index = 0; index < gplActions.length; index++) {
-    const current_action = gplActions[index];
-    const action_slug = slugify(current_action);
-    const relevantGdhTags = _allGDHProjectTags.filter(function (singleTag) {
-      return singleTag.slug === action_slug;
-    });
-
-    if (relevantGdhTags.length > 0) {
-      for (let tag_index = 0; tag_index < relevantGdhTags.length; tag_index++) {
-        const current_tag = relevantGdhTags[tag_index];
-        gdhTagIDs.push(current_tag.id);
-
-      }
-    }
-  }
-  return gdhTagIDs;
 }
 
 function getDesignsforGDHTeam() {
@@ -506,7 +474,7 @@ function getDesignJSONandMigrate() {
 
 }
 
-function migrateIGCDiagrams() {
+function migrateGPLFeaturesAsDiagrams() {
   // Save button text and set it to loading
   const buttonText = this.innerHTML;
   this.innerHTML = 'Processing...';
@@ -514,41 +482,45 @@ function migrateIGCDiagrams() {
   const gdhApiToken = document.getElementById("gdh-api-token").value;
   const gdhProjectID = document.getElementById("gdh-project-id").value;
 
-  let source_diagrams_len = _sourceScenarioFeaturesGeoJSON.length;
+  let source_diagrams_len = _diagramsGeoJSON.length;
   for (let index = 0; index < source_diagrams_len; index++) {
-    const current_diagram_details = _sourceScenarioFeaturesGeoJSON[index];
-    const gplSystem = current_diagram_details.properties.Intervention_System;
-    const gplInterventionName = current_diagram_details.properties.Intervention_Type;
+    const current_diagram_feature = _diagramsGeoJSON[index];
+    const gplSystem = current_diagram_feature.properties.system;
+    const gplTagCodes = current_diagram_feature.properties.ACTION_IDS;
+    // Make a list based on pipe delimited status 
+    let gdhTagCodes = [];
+    
+    if (/[|]+/.test(gplTagCodes)){
+      gdhTagCodes = gplTagCodes.split('|');
+    }
+    else {
+      gdhTagCodes =[gplTagCodes]
+    }
+    
 
     const gdhSystemID = gdhGPLSystemConverter(gplSystem);
-
-    const gj = current_diagram_details['geometry'];
-    let gj_feature_object = { "type": "Feature", "properties": {}, "geometry": { "type": gj['type'], "coordinates": gj['coordinates'] } }
-    let gj_feature_collection = { "type": "FeatureCollection", "features": [gj_feature_object] }
+    const gj = current_diagram_feature['geometry'];    
+    let gj_feature_collection = { "type": "FeatureCollection", "features": [current_diagram_feature] }
     let geoJSONGeometryType = gj['type'].toLowerCase();
 
     if (geoJSONGeometryType == 'LineString') {
       geoJSONGeometryType = 'polyline';
     }
 
-    var postJson = {"featuretype": geoJSONGeometryType, "description": gplInterventionName, "geometry": gj_feature_collection};
+    var postJson = {"featuretype": geoJSONGeometryType, "description": "Test Migration", "geometry": gj_feature_collection};
 
     if (index == 1) {
       break;
     }
 
     let gplOriginalObjectID = { 'notes': 0 }
-    if (current_diagram_details.properties.hasOwnProperty("OBJECTID")) {
-      gplOriginalObjectID['notes'] = current_diagram_details.properties.OBJECTID;
+    if (current_diagram_feature.properties.hasOwnProperty("OBJECTID")) {
+      gplOriginalObjectID['notes'] = current_diagram_feature.properties.OBJECTID;
     }
 
-
-    let gdhRelevantTagIDs = [];
-    if (useIGCSpecificBridgeExtensions) {
-      gdhRelevantTagIDs = gdhGPLActionsConverter([gplInterventionName]);
-    }
 
     if (gdhSystemID !== 0) {
+     
       gdhMigrateDiagramsToProject(gdhProjectID, gdhApiToken, gdhSystemID, 'project', postJson).then(diagram_data => {
         consoleElement.innerHTML = `<div>${JSON.stringify(diagram_data, null, 2)}</div>${consoleElement.innerHTML}`;
         // Reset button text
@@ -558,9 +530,9 @@ function migrateIGCDiagrams() {
         // Assign Diagram Tags 
           const dd = JSON.parse(diagram_data);
           let diagramID = dd['diagram_id'];
-        if (gdhRelevantTagIDs.length > 0) {
+        if (gdhTagCodes.length > 0) {
 
-          gdhAssignDiagramTags(gdhProjectID, gdhApiToken, diagramID, gdhRelevantTagIDs).then(tagsAssigned => {
+          gdhAssignDiagramTagCodes(gdhProjectID, gdhApiToken, diagramID, gdhTagCodes).then(tagsAssigned => {
             consoleElement.innerHTML = "Climate Actions successfully assigned to migrated Diagram.."
           })
             .catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
@@ -635,7 +607,7 @@ function arcGISOnlineSignIn() {
       // SET LOCAL VARIABLE ACCESSIBLE TO OTHER FUNCTIONS //
       //
       _sourceScenarioFeaturesGeoJSON = sourceScenarioFeaturesGeoJSON;
-
+      
       // DID WE CONVERT ANY FEATURES //
       if (_sourceScenarioFeaturesGeoJSON.length) {
 
@@ -673,6 +645,7 @@ function arcGISOnlineSignIn() {
           // GROUP CLIMATE ACTIONS BY SYSTEM //
           const groupedActionsBySystem = actions.reduce((bySystem, action) => {
             // GET CLIMATE ACTION DETAILS //
+            
             const climateAction = getClimateAction(action);
             // GET LIST OF CLIMATE ACTIONS BY SYSTEM //
             const actionsBySystem = bySystem.get(climateAction.systemCode) || [];
@@ -680,7 +653,7 @@ function arcGISOnlineSignIn() {
             actionsBySystem.push(climateAction.actionCode);
             return bySystem.set(climateAction.systemCode, actionsBySystem);
           }, new Map());
-
+          
           // CREATE ONE DIAGRAM FOR EACH SYSTEM //
           groupedActionsBySystem.forEach((climateActions, systemCode) => {
             // DIAGRAM //
@@ -708,22 +681,22 @@ function arcGISOnlineSignIn() {
         //
         // SIMULATE NEGOTIATIONS BY SENDING BACK FIRST 10 DIAGRAMS //
         //
-        const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(_diagramsGeoJSON, 10);
+        // const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(_diagramsGeoJSON, 10);
 
 
         // TESTING: DON'T TRANSFER ALL FEATURES OVER...
-        const createNewGeoPlannerScenario = confirm('Create a new GeoPlanner Scenario?');
-        if (createNewGeoPlannerScenario) {
-          //
-          // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
-          //
-          diagramReader.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
-            console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs, diagramReader);
+        // const createNewGeoPlannerScenario = confirm('Create a new GeoPlanner Scenario?');
+        // if (createNewGeoPlannerScenario) {
+        //   //
+        //   // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
+        //   //
+        //   diagramReader.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
+        //     console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs, diagramReader);
 
-          }).catch(error => {
-            console.error('Diagram Reader createNewGeoPlannerScenario() Error: ', error);
-          });
-        }
+        //   }).catch(error => {
+        //     console.error('Diagram Reader createNewGeoPlannerScenario() Error: ', error);
+        //   });
+        // }
       } else {
         console.warn('Diagram Reader - no features retrieved...');
       }
@@ -739,7 +712,7 @@ function arcGISOnlineSignIn() {
 // Bind actions to buttons
 
 verifyCredenditalsBtn.addEventListener('click', verifyCredentials);
-migrateDiagramsBtn.addEventListener('click', migrateIGCDiagrams);
+migrateDiagramsBtn.addEventListener('click', migrateGPLFeaturesAsDiagrams);
 gdhDesignTeamSelectBtn.addEventListener('click', getDesignsforGDHTeam);
 migrateGdhDesignBtn.addEventListener('click', getDesignJSONandMigrate);
 // JG //
