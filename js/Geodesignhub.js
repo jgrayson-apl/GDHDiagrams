@@ -4,7 +4,7 @@
 // ------------------------------------------------------ //
 
 /**
- * @typedef {{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string}} CLIMATE_ACTION
+ * @typedef {{ systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string, gdhSystemCode: string}} CLIMATE_ACTION
  */
 
 /**
