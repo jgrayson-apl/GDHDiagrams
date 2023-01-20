@@ -4,10 +4,14 @@
 // ------------------------------------------------------ //
 
 /**
+ * @typedef {{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string}} CLIMATE_ACTION
+ */
+
+/**
  *
  * CLIMATE ACTIONS DETAILS
  *
- * @type {{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string},{systemName: string, policyName: string, systemCode: string, actionCode: string, policyCode: string, actionName: string}[]}
+ * @type {CLIMATE_ACTION[]}
  */
 const CLIMATE_ACTIONS = [
   {
@@ -16,7 +20,8 @@ const CLIMATE_ACTIONS = [
     policyCode: '1.3',
     policyName: 'Close fossil energy generators',
     systemCode: '1',
-    systemName: 'Energy'
+    systemName: 'Energy',
+    gdhSystemCode: 'ENE'
   },
   {
     actionCode: '1.4.1',
@@ -24,7 +29,8 @@ const CLIMATE_ACTIONS = [
     policyCode: '1.4',
     policyName: 'Substitute with renewable energy systems',
     systemCode: '1',
-    systemName: 'Energy'
+    systemName: 'Energy',
+    gdhSystemCode: 'ENE'
   },
   {
     actionCode: '1.4.3',
@@ -32,7 +38,8 @@ const CLIMATE_ACTIONS = [
     policyCode: '1.4',
     policyName: 'Substitute with renewable energy systems',
     systemCode: '1',
-    systemName: 'Energy'
+    systemName: 'Energy',
+    gdhSystemCode: 'ENE'
   },
   {
     actionCode: '3.1.11',
@@ -40,7 +47,9 @@ const CLIMATE_ACTIONS = [
     policyCode: '3.1',
     policyName: 'Manage forests sustainably',
     systemCode: '3',
-    systemName: 'Forests, Peatlands, and Grasslands'
+    systemName: 'Forests, Peatlands, and Grasslands',
+    gdhSystemCode: 'FOR'
+
   },
   {
     actionCode: '3.1.12',
@@ -48,7 +57,8 @@ const CLIMATE_ACTIONS = [
     policyCode: '3.1',
     policyName: 'Manage forests sustainably',
     systemCode: '3',
-    systemName: 'Forests, Peatlands, and Grasslands'
+    systemName: 'Forests, Peatlands, and Grasslands',
+    gdhSystemCode: 'FOR'
   }
 ];
 
@@ -56,24 +66,6 @@ const CLIMATE_ACTIONS = [
  * DIAGRAM READER
  */
 import DiagramReader from './DiagramReader.js';
-
-/**
- *
- * *** DO NOT USE ***
- *  NOTE: JUST A DUMMY METHOD SO ERRORS ARE NOT THROWN
- *
- * @param {{}[]} features
- * @param {number} [limit]
- * @returns {Graphic[]}
- */
-function negotiate_in_geodesign_hub(features, limit = 25) {
-  return features.slice(0, limit).map(feature => {
-    return {
-      attributes: {...feature.properties},
-      geometry: Terraformer.geojsonToArcGIS(feature.geometry)
-    };
-  });
-}
 
 //
 //
@@ -486,7 +478,7 @@ function migrateGPLFeaturesAsDiagrams() {
   for (let index = 0; index < source_diagrams_len; index++) {
     const current_diagram_feature = _diagramsGeoJSON[index];
     const gplSystem = current_diagram_feature.properties.system;
-    const gplTagCodes = current_diagram_feature.properties.ACTION_IDS;
+    const gplTagCodes = current_diagram_feature.properties.ACTION_IDS;  // JG: USE tags PROPERTY WHICH SHOULD ALREADY BE AN ARRAY //
     // Make a list based on pipe delimited status 
     let gdhTagCodes = [];
     
@@ -622,8 +614,10 @@ function arcGISOnlineSignIn() {
 
         /**
          *
+         * GET CLIMATE ACTION DETAILS
+         *
          * @param {string} actionCode
-         * @returns {string}
+         * @returns {CLIMATE_ACTION}
          */
         const getClimateAction = actionCode => {
           return CLIMATE_ACTIONS.find(action => {
@@ -632,7 +626,7 @@ function arcGISOnlineSignIn() {
         };
 
         //
-        // DECONSTRUCT FEATURES INTO DIAGRAMS
+        // DECONSTRUCT/DISASSEMBLE FEATURES INTO DIAGRAMS
         //
         // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
         // BASED ON THE SYSTEM. WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN SOURCE SCENARIO FEATURES
@@ -662,9 +656,9 @@ function arcGISOnlineSignIn() {
               id: (list.length + 1),
               geometry: feature.geometry,
               properties: {
-                ...feature.properties, // HERE WE COULD RESTRICT OF FILTER WHICH PROPERTIES/ATTRIBUTES MAINTAIN... //
+                ...feature.properties, // HERE WE COULD RESTRICT OR FILTER WHICH PROPERTIES/ATTRIBUTES TO MAINTAIN... //
                 system: systemCode,
-                tags: climateActions
+                tags: climateActions // ARRAY OF CLIMATE ACTION CODES //
               }
             };
             list.push(newDiagram);

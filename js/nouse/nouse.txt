@@ -494,3 +494,22 @@ initializeGeoPlannerLayers({portal}) {
     });
   });
 }
+
+
+/**
+ *
+ * *** DO NOT USE ***
+ *  NOTE: JUST A DUMMY METHOD SO ERRORS ARE NOT THROWN
+ *
+ * @param {{}[]} features
+ * @param {number} [limit]
+ * @returns {Graphic[]}
+ */
+/*function negotiate_in_geodesign_hub(features, limit = 25) {
+  return features.slice(0, limit).map(feature => {
+    return {
+      attributes: {...feature.properties},
+      geometry: Terraformer.geojsonToArcGIS(feature.geometry)
+    };
+  });
+}*/
