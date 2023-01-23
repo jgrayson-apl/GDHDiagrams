@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>GDH Viewer</title>
+    <script
+      src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"
+      integrity="sha512-Dqm3h1Y4qiHUjbhxTuBGQsza0Tfppn53SHlu/uj1f+RT+xfShfe7r6czRf5r2NmllO2aKx+tYJgoxboOkn1Scg=="
+      crossorigin=""></script>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css"
+      integrity="sha512-mD70nAW2ThLsWH0zif8JPbfraZ8hbCtjQ+5RU1m4+ztZq6/MymyZeB55pWsi4YAX+73yvcaJyk61mzfYMvtm9w=="
+      crossorigin=""/>
+    <script
+      src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"
+      integrity="sha512-i9mZ/0lnBMdKZjkVQXImtZbWzrhomyyQzXarfT4ki1eD/Bi+rcV4lFyzX52lbRQtqj070JQea4p8QNCMrHzuYg=="
+      crossorigin=""></script>
+    <script
+      src="https://unpkg.com/esri-leaflet-vector@4.0.0/dist/esri-leaflet-vector.js"
+      integrity="sha512-EMt/tpooNkBOxxQy2SOE1HgzWbg9u1gI6mT23Wl0eBWTwN9nuaPtLAaX9irNocMrHf0XhRzT8B0vXQ/bzD0I0w=="
+      crossorigin=""></script>
+    <script
+      src="https://unpkg.com/esri-leaflet-renderers@3.0.0/dist/esri-leaflet-renderers.js"
+      integrity="sha512-tqY7QUz7UHKLqhBX1SVYBsn6EKeadkSqYXsdj3RbzZdY8jUq1t0Hi+CS7vylbMIM/jcmN4PgelBhiKvCjTJ7GQ=="
+      crossorigin=""></script>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+      }
+      
+      #maps-container {
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      
+      #map-3857 {
+        flex: 1 1 0;
+      }
+      
+      #map-4326 {
+        flex: 1 1 0;
+      }
+      
+      #layers-list {
+        padding: 10px;
+        flex: 1 1 0;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        color: #323232;
+      }
+      
+      #layers-list h3 {
+        border-bottom: solid 2px #666666;
+      }
+      
+      .details-node {
+        padding: 3px;
+        border-bottom: solid 1px #666666;
+      }
+      
+      .title-node {
+        padding: 2px 0;
+        font-weight: 600;
+      }
+      
+      .message-node {
+        padding: 2px;
+      }
+      
+      .message-error {
+        padding: 2px 4px;
+        color: darkred;
+      }
+    
+    </style>
+  </head>
+  <body>
+    
+    <div id="maps-container">
+      <div id="map-3857"></div>
+    </div>
+    
+    <div id="layers-list">
+      <h3>IGC Supporting Layers</h3>
+    </div>
+    
+    <script type="module">
+      
+      /**
+       * https://leafletjs.com/reference.html
+       * https://developers.arcgis.com/esri-leaflet/
+       */
+      
+      const igcLeafletLayers = [
+        {
+          name: 'Global Predominant Terrestrial Ecosystems for GGP v5',
+          type: 'Imagery Layer',
+          source: 'Image Service',
+          spatialReference: 4326,
+          itemUrl: 'https://igcollab.maps.arcgis.com/home/item.html?id=d6c52e7d49bf49f0bdc544284e2099aa',
+          url: 'https://iservices9.arcgis.com/vBCQ4PWZkZBueexC/arcgis/rest/services/Global_Predominant_Terrestrial_Ecosystems_for_GGP_v5/ImageServer'
+        },
+        {
+          name: 'USA Protected Areas',
+          type: 'Imagery Layer',
+          source: 'Image Service',
+          spatialReference: 3857,
+          itemUrl: 'https://igcollab.maps.arcgis.com/home/item.html?id=13b8c063bb0d4b30a89737605b81b9e2',
+          url: 'https://landscape10.arcgis.com/arcgis/rest/services/USA_Protected_Areas/ImageServer'
+        }
+      ];
+      
+      // API KEY //
+      const apiKey = "AAPKbd2be5398c95403c8abaaf78ff7e0d0f9ozezhqoNZBhM_uogCWsFrbncARXuh9ITSwtZ83k7bQLo_kqnA-r-3put9HFxbJq";
+      // CLIENT ID //
+      const clientId = "PZdAgiu187TroTCX";
+      // ACCESS TOKEN //
+      let accessToken;
+      
+      // AUTHENTICATION CALLBACK PAGE //
+      const callbackPage = `${ location.origin }${ location.pathname.replace(/index/, 'authenticate') }`;
+      
+      // ARCGIS REST IDENTITY MANAGER //
+      import { ArcGISIdentityManager } from 'https://cdn.skypack.dev/@esri/arcgis-rest-request@4.0.0';
+      
+      // BEGIN OAUTH //
+      ArcGISIdentityManager.beginOAuth2({
+        clientId,
+        redirectUri: callbackPage
+      }).then(authenticationManager => {
+        
+        accessToken = authenticationManager.token;
+        
+        // MAP  - 3857//
+        const map_3857 = L.map('map-3857', {crs: L.CRS.EPSG3857}).setView([34.0, -118.0], 9);
+        
+        // BASEMAP //
+        const topoBasemap = L.esri.Vector.vectorBasemapLayer("ArcGIS:Topographic", {apikey: apiKey});
+        topoBasemap.addTo(map_3857);
+        
+        // LAYER CONTROL //
+        const layerControl_3857 = L.control.layers({"Esri Topographic": topoBasemap}, {}, {collapsed: false});
+        layerControl_3857.addTo(map_3857);
+        
+        // LAYERS LIST //
+        const layersList = document.getElementById('layers-list');
+        /**
+         *
+         * @param {string} title
+         * @param {string} message
+         * @param {Error} [error]
+         * @private
+         */
+        const _addMessage = ({title, message, error}) => {
+          
+          const detailsNode = document.createElement('div');
+          detailsNode.classList.add('details-node');
+          
+          const titleNode = document.createElement('div');
+          titleNode.classList.add('title-node');
+          titleNode.innerHTML = title;
+          detailsNode.append(titleNode);
+          
+          const messageNode = document.createElement('div');
+          messageNode.classList.add('message-node');
+          messageNode.innerHTML = message;
+          detailsNode.append(messageNode);
+          
+          if (error) {
+            const errorNode = document.createElement('div');
+            errorNode.classList.add('message-error');
+            errorNode.innerHTML = error.message;
+            detailsNode.append(errorNode);
+          }
+          
+          layersList.append(detailsNode);
+        };
+        
+        // TRY TO LOAD EACH LAYER //
+        igcLeafletLayers.forEach(layerInfo => {
+          
+          try {
+            
+            // LAYER PROPERTIES FOR ALL LAYERS //
+            const layerProperties = {url: layerInfo.url, token: accessToken};
+            // LINKS //
+            const links = `<a href="${ layerInfo.itemUrl }" target="_blank">item</a> | <a href="${ layerInfo.url }" target="_blank">url</a> | <a href="${ layerInfo.url }?token=${ accessToken }" target="_blank">url w token</a>`;
+            // DETAILS //
+            const details = `${ links } | Type: ${ layerInfo.type } | Source: ${ layerInfo.source } | Spatial Reference: ${ layerInfo.spatialReference || 'unknown' }`;
+            
+            let layer;
+            
+            switch (layerInfo.type) {
+              case 'Feature Layer':
+                layer = L.esri.featureLayer(layerProperties);
+                break;
+              
+              case 'Tile Layer':
+                layer = L.esri.tiledMapLayer(layerProperties);
+                break;
+              
+              case 'Imagery Layer':
+                layer = L.esri.imageMapLayer(layerProperties);
+                break;
+              
+            }
+            
+            _addMessage({title: layerInfo.name, message: details});
+            
+            // ADD TO MAP //
+            layer.addTo(map_3857);
+            // ADD TO LAYER CONTROL //
+            layerControl_3857.addOverlay(layer, layerInfo.name);
+            
+          } catch (error) {
+            _addMessage({title: layerInfo.name, message: details, error});
+          }
+          
+        });
+      });
+    </script>
+  </body>
+</html>
