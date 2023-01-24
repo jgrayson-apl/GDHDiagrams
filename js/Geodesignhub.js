@@ -672,7 +672,7 @@ function arcGISOnlineSignIn() {
          * @param {string} actionCode
          * @returns {CLIMATE_ACTION}
          */
-        const getClimateAction = actionCode => {
+        const _getClimateAction = actionCode => {
           return CLIMATE_ACTIONS.find(action => {
             return (action.actionCode === actionCode);
           });
@@ -693,7 +693,7 @@ function arcGISOnlineSignIn() {
           const groupedActionsBySystem = actions.reduce((bySystem, action) => {
             // GET CLIMATE ACTION DETAILS //
 
-            const climateAction = getClimateAction(action);
+            const climateAction = _getClimateAction(action);
             // GET LIST OF CLIMATE ACTIONS BY SYSTEM //
             const actionsBySystem = bySystem.get(climateAction.systemCode) || [];
             // ADD ACTION TO LIST OF ACTIONS BY SYSTEM //
