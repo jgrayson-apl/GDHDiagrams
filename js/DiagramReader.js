@@ -603,7 +603,7 @@ class DiagramReader extends EventTarget {
         attributes: {
           Geodesign_ProjectID: projectID,
           Geodesign_ScenarioID: scenarioID,
-          // SOURCE_ID: diagramFeature.attributes.notes,
+          SOURCE_ID: diagramFeature.attributes.notes,
           ACTION_IDS: diagramFeature.attributes.tag_codes,
           name: diagramFeature.attributes.description
         }
