@@ -545,7 +545,7 @@ function migrateGPLFeaturesAsDiagrams() {
     current_diagram_feature['geometry'] = rewound;
 
     let gj_feature_collection = { "type": "FeatureCollection", "features": [current_diagram_feature] }
-    console.log(gj_feature_collection)
+    
     if (geoJSONGeometryType == 'LineString') {
       geoJSONGeometryType = 'polyline';
     }
