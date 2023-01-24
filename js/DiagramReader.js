@@ -591,7 +591,7 @@ class DiagramReader extends EventTarget {
    * ADDING THEM BACK TO THE FEATURE LAYER
    *
    *
-   * @param {{}[]} candidateFeatures array of features (GeoJSON or Esri JSON)
+   * @param {{}[]} candidateFeatures
    * @param {string} projectID
    * @param {string} scenarioID
    * @returns {Graphic[]}
