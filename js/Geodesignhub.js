@@ -105,7 +105,6 @@ function rewindRing(ring, dir) {
   if (area + err >= 0 !== !!dir) ring.reverse();
 }
 
-
 /**
  * DIAGRAM READER
  */
@@ -121,7 +120,7 @@ import DiagramReader from './DiagramReader.js';
 
 // TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:8000/api/v1';
-let _gdhNegotiatedDesignJSON = null;
+//let _gdhNegotiatedDesignJSON = null;
 // JG //
 let _sourceScenarioFeaturesGeoJSON = null;
 let _diagramsGeoJSON = null;
@@ -145,9 +144,10 @@ function ApiError(message, data, status) {
   this.message = message;
   this.status = status;
   this.toString = function () {
-    return `${this.message}\nResponse:\n${isObject ? JSON.stringify(this.response, null, 2) : this.response}`;
+    return `${ this.message }\nResponse:\n${ isObject ? JSON.stringify(this.response, null, 2) : this.response }`;
   };
 }
+
 function wait(ms) {
   var start = new Date().getTime();
   var end = start;
@@ -155,6 +155,7 @@ function wait(ms) {
     end = new Date().getTime();
   }
 }
+
 // API wrapper function
 const fetchResource = (path, userOptions = {}) => {
   // Define default options
@@ -174,7 +175,7 @@ const fetchResource = (path, userOptions = {}) => {
   };
 
   // Build Url
-  const url = `${API_URL}/${path}`;
+  const url = `${ API_URL }/${ path }`;
 
   // Detect is we are uploading a file
   const isFile = options.body instanceof File;
@@ -195,13 +196,13 @@ const fetchResource = (path, userOptions = {}) => {
     if (response.status === 401) {
       // Handle unauthorized requests
       // Maybe redirect to login page?
-      throw new ApiError(`Request failed with status ${response.status}.`, "Problem with your API token, please verify by going to https://www.geodesignhub/api/token/", response.status);
+      throw new ApiError(`Request failed with status ${ response.status }.`, "Problem with your API token, please verify by going to https://www.geodesignhub/api/token/", response.status);
     }
     // HTTP unauthorized
     if (response.status === 400) {
       // Handle unauthorized requests
       // Maybe redirect to login page?
-      throw new ApiError(`Request failed with status ${response.status}.`, "Please verify the Project ID, it does not exist or you dont have access to it", response.status);
+      throw new ApiError(`Request failed with status ${ response.status }.`, "Please verify the Project ID, it does not exist or you dont have access to it", response.status);
     }
 
     // Check for error HTTP error codes
@@ -213,26 +214,26 @@ const fetchResource = (path, userOptions = {}) => {
     // Get response as json
     return response.json();
   })
-    // "parsedResponse" will be either text or javascript object depending if
-    // "response.text()" or "response.json()" got called in the upper scope
-    .then(parsedResponse => {
-      // Check for HTTP error codes
-      if (response.status < 200 || response.status >= 300) {
-        // Throw error
-        throw parsedResponse;
-      }
+  // "parsedResponse" will be either text or javascript object depending if
+  // "response.text()" or "response.json()" got called in the upper scope
+  .then(parsedResponse => {
+    // Check for HTTP error codes
+    if (response.status < 200 || response.status >= 300) {
+      // Throw error
+      throw parsedResponse;
+    }
 
-      // Request succeeded
-      return parsedResponse;
-    }).catch(error => {
-      // Throw custom API error
-      // If response exists it means HTTP error occured
-      if (response) {
-        throw new ApiError(`Request failed with status ${response.status}.`, error, response.status);
-      } else {
-        throw new ApiError(error, null, 'REQUEST_FAILED');
-      }
-    });
+    // Request succeeded
+    return parsedResponse;
+  }).catch(error => {
+    // Throw custom API error
+    // If response exists it means HTTP error occured
+    if (response) {
+      throw new ApiError(`Request failed with status ${ response.status }.`, error, response.status);
+    } else {
+      throw new ApiError(error, null, 'REQUEST_FAILED');
+    }
+  });
 };
 
 // ------------------------------------------------------ //
@@ -241,75 +242,73 @@ const fetchResource = (path, userOptions = {}) => {
 // this is a very naive implementation for demo purposes
 // ------------------------------------------------------ //
 
-
-
 const gdhVerifyProjectCredentials = (projectID, apiToken) => {
-  return fetchResource(`projects/${projectID}/`,
+  return fetchResource(`projects/${ projectID }/`,
     {
       method: 'GET',
       headers: {
-        "Authorization": `Token ${apiToken}`
+        "Authorization": `Token ${ apiToken }`
       }
     });
 };
 
 const gdhVerifyProjectSystems = (projectID, apiToken) => {
-  return fetchResource(`projects/${projectID}/systems/`,
+  return fetchResource(`projects/${ projectID }/systems/`,
     {
       method: 'GET',
       headers: {
-        "Authorization": `Token ${apiToken}`
+        "Authorization": `Token ${ apiToken }`
       }
     });
 };
 
 const gdhGetProjectTags = (projectID, apiToken) => {
-  return fetchResource(`projects/${projectID}/tags/`,
+  return fetchResource(`projects/${ projectID }/tags/`,
     {
       method: 'GET',
       headers: {
-        "Authorization": `Token ${apiToken}`
+        "Authorization": `Token ${ apiToken }`
       }
     });
 };
 
 const gdhGetProjectDesignTeams = (projectID, apiToken) => {
-  return fetchResource(`projects/${projectID}/cteams/`,
+  return fetchResource(`projects/${ projectID }/cteams/`,
     {
       method: 'GET',
       headers: {
-        "Authorization": `Token ${apiToken}`
+        "Authorization": `Token ${ apiToken }`
       }
     });
 };
 
 const gdhGetDesignTeamDesigns = (projectID, apiToken, designTeamID) => {
-  return fetchResource(`projects/${projectID}/cteams/${designTeamID}/`,
+  return fetchResource(`projects/${ projectID }/cteams/${ designTeamID }/`,
     {
       method: 'GET',
       headers: {
-        "Authorization": `Token ${apiToken}`
+        "Authorization": `Token ${ apiToken }`
       }
     });
 };
 
 const gdhGetDesignESRIJSON = (projectID, apiToken, designTeamID, designID) => {
-  return fetchResource(`projects/${projectID}/cteams/${designTeamID}/${designID}/esri/`,
+  return fetchResource(`projects/${ projectID }/cteams/${ designTeamID }/${ designID }/esri/`,
     {
       method: 'GET',
       headers: {
-        "Authorization": `Token ${apiToken}`
+        "Authorization": `Token ${ apiToken }`
       }
     });
 };
 
 const gdhAssignDiagramTagCodes = (projectID, apiToken, diagramID, postJson) => {
 
-  return fetchResource(`projects/${projectID}/diagrams/${diagramID}/tags/codes/`,
+  return fetchResource(`projects/${ projectID }/diagrams/${ diagramID }/tags/codes/`,
     {
       method: 'POST',
       headers: {
-        "Authorization": `Token ${apiToken}`,
+        "Authorization": `Token ${ apiToken }`,
         "content-type": "application/json"
       },
       body: JSON.stringify(postJson)
@@ -319,11 +318,11 @@ const gdhAssignDiagramTagCodes = (projectID, apiToken, diagramID, postJson) => {
 
 const gdhAssignDiagramNotes = (projectID, apiToken, diagramID, postJson) => {
 
-  return fetchResource(`projects/${projectID}/diagrams/${diagramID}/notes/`,
+  return fetchResource(`projects/${ projectID }/diagrams/${ diagramID }/notes/`,
     {
       method: 'POST',
       headers: {
-        "Authorization": `Token ${apiToken}`,
+        "Authorization": `Token ${ apiToken }`,
         "content-type": "application/json"
       },
       body: JSON.stringify(postJson)
@@ -333,11 +332,11 @@ const gdhAssignDiagramNotes = (projectID, apiToken, diagramID, postJson) => {
 
 const gdhMigrateDiagramsToProject = (projectID, apiToken, systemID, projectOrPolicy, postJson) => {
 
-  return fetchResource(`projects/${projectID}/systems/${systemID}/add/${projectOrPolicy}/`,
+  return fetchResource(`projects/${ projectID }/systems/${ systemID }/add/${ projectOrPolicy }/`,
     {
       method: 'POST',
       headers: {
-        "Authorization": `Token ${apiToken}`,
+        "Authorization": `Token ${ apiToken }`,
         "content-type": "application/json"
       },
       body: JSON.stringify(postJson)
@@ -378,13 +377,13 @@ function verifyCredentials() {
     // Check if the API token and the project works (the user has access to the project and the project is of the right tpype)
     gdhVerifyProjectCredentials(gdhProjectID, gdhApiToken).then(data => {
       if (data.external_connection !== 'esri') {
-        consoleElement.innerHTML = `<div>${JSON.stringify(data, null, 2)}</div>${consoleElement.innerHTML}<br>The project is not a ESRI workspace project in Geodesignhub, we cannot migrate data at this time.`;
+        consoleElement.innerHTML = `<div>${ JSON.stringify(data, null, 2) }</div>${ consoleElement.innerHTML }<br>The project is not a ESRI workspace project in Geodesignhub, we cannot migrate data at this time.`;
         // Reset button text
         this.innerHTML = buttonText;
 
       } else {
         gdhVerifyProjectSystems(gdhProjectID, gdhApiToken).then(systemsData => {
-          const validSystemColors = [{ "gplSystemCode": 1, 'name': 'ENE', 'color': "#AB507E" }, { "gplSystemCode": 2, 'name': 'AG', 'color': "#D9CD91" }, { "gplSystemCode": 3, 'name': 'FOR', 'color': "#80BD75" }, { "gplSystemCode": 4, 'name': 'OCN', 'color': "#8CCDD1" }, { "gplSystemCode": 5, 'name': 'STL', 'color': "#E6564E" }, { "gplSystemCode": 6, 'name': 'IND', 'color': "#916DA3" }, { "gplSystemCode": 7, 'name': 'TRAN', 'color': "#706666" }, { "gplSystemCode": 8, 'name': 'WAT', 'color': "#6B9CB0" }];
+          const validSystemColors = [{"gplSystemCode": 1, 'name': 'ENE', 'color': "#AB507E"}, {"gplSystemCode": 2, 'name': 'AG', 'color': "#D9CD91"}, {"gplSystemCode": 3, 'name': 'FOR', 'color': "#80BD75"}, {"gplSystemCode": 4, 'name': 'OCN', 'color': "#8CCDD1"}, {"gplSystemCode": 5, 'name': 'STL', 'color': "#E6564E"}, {"gplSystemCode": 6, 'name': 'IND', 'color': "#916DA3"}, {"gplSystemCode": 7, 'name': 'TRAN', 'color': "#706666"}, {"gplSystemCode": 8, 'name': 'WAT', 'color': "#6B9CB0"}];
 
           let allSysNameColorsFound = [];
           for (let x1 = 0; x1 < validSystemColors.length; x1++) {
@@ -402,7 +401,7 @@ function verifyCredentials() {
           const isAllOne = allSysNameColorsFound.every(item => item === 1);
           if (isAllOne) {
 
-            consoleElement.innerHTML = `<div>Project successfully verified, ready for data migration..</div>${consoleElement.innerHTML}`;
+            consoleElement.innerHTML = `<div>Project successfully verified, ready for data migration..</div>${ consoleElement.innerHTML }`;
             // Reset button text
             this.innerHTML = buttonText;
             _allGDHSystems = systemsData;
@@ -421,21 +420,21 @@ function verifyCredentials() {
                 teamsSelectionCont.appendChild(opt);
               }
 
-            }).catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
+            }).catch(error => consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`);
 
           } else {
 
             consoleElement.innerHTML = "Geodesignhub project is not setup correctly, please contact your administrator";
           }
         }).catch(error => {
-          consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
+          consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
 
           this.innerHTML = buttonText;
           // Reset button text
         });
       }
     }).catch(error => {
-      consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
+      consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
       // Reset button text
       this.innerHTML = buttonText;
     });
@@ -446,7 +445,7 @@ function verifyCredentials() {
 
 function gdhGPLSystemConverter(gplSystem) {
   // This function takes a "Intervention System" from Geoplanner and returns 
-  const gplGDHLookup = { 1: 'ENE', 2: 'AG', 3: 'FOR', 4: 'OCN', 5: 'STL', 6: 'IND', 7: 'TRAN', 8: 'WAT' };
+  const gplGDHLookup = {1: 'ENE', 2: 'AG', 3: 'FOR', 4: 'OCN', 5: 'STL', 6: 'IND', 7: 'TRAN', 8: 'WAT'};
 
   let gdhSystemID = 0;
   if (gplGDHLookup.hasOwnProperty(gplSystem)) {
@@ -488,6 +487,7 @@ function getDesignsforGDHTeam() {
   });
 
 }
+
 function getDesignJSONandMigrate() {
 
   const buttonText = this.innerHTML;
@@ -503,13 +503,16 @@ function getDesignJSONandMigrate() {
 
   gdhGetDesignESRIJSON(gdhProjectID, gdhApiToken, gdhDesignTeamID, gdhDesignID).then(designData => {
     // TODO: Migrate this design to GPL
-    _gdhNegotiatedDesignJSON = designData;
-    this.innerHTML = 'Migration complete..'
 
+    this.migrateDesignAsNewGeoPlannerScenario(designData).then(() => {
+      this.innerHTML = 'Migration complete..';
 
+    }).catch(error=>{
+      consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
+      this.innerHTML = buttonText;
+    });
   }).catch(error => {
-
-    consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
+    consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
     // Reset button text
     this.innerHTML = buttonText;
   });
@@ -526,11 +529,12 @@ function migrateGPLFeaturesAsDiagrams() {
 
   let source_diagrams_len = _diagramsGeoJSON.length;
   console.log(_diagramsGeoJSON);
+
   for (let index = 0; index < source_diagrams_len; index++) {
     const current_diagram_feature = _diagramsGeoJSON[index];
-    const gplSystem = current_diagram_feature.properties.system;
 
-    const gdhTagCodes = current_diagram_feature.properties.tags;  // JG: USE tags PROPERTY WHICH SHOULD ALREADY BE AN ARRAY //
+    const gplSystem = current_diagram_feature.properties.system;
+    const gdhTagCodes = current_diagram_feature.properties.tags;
     let gdhDiagramName = current_diagram_feature.properties.name;
 
     if (gdhDiagramName == "") {
@@ -544,31 +548,30 @@ function migrateGPLFeaturesAsDiagrams() {
     let rewound = rewind(gj, false);
     current_diagram_feature['geometry'] = rewound;
 
-    let gj_feature_collection = { "type": "FeatureCollection", "features": [current_diagram_feature] }
-    
+    let gj_feature_collection = {"type": "FeatureCollection", "features": [current_diagram_feature]};
+
     if (geoJSONGeometryType == 'LineString') {
       geoJSONGeometryType = 'polyline';
     }
 
-    var postJson = { "featuretype": geoJSONGeometryType, "description": gdhDiagramName, "geometry": gj_feature_collection };
+    var postJson = {"featuretype": geoJSONGeometryType, "description": gdhDiagramName, "geometry": gj_feature_collection};
 
     if (index == 1) {
       break;
     }
 
-    let gplOriginalObjectID = { 'notes': 0 }
+    let gplOriginalObjectID = {'notes': 0};
     if (current_diagram_feature.properties.hasOwnProperty("OBJECTID")) {
       gplOriginalObjectID['notes'] = current_diagram_feature.properties.OBJECTID;
     }
 
-
     if (gdhSystemID !== 0) {
 
       gdhMigrateDiagramsToProject(gdhProjectID, gdhApiToken, gdhSystemID, 'project', postJson).then(diagram_data => {
-        consoleElement.innerHTML = `<div>${JSON.stringify(diagram_data, null, 2)}</div>${consoleElement.innerHTML}`;
+        consoleElement.innerHTML = `<div>${ JSON.stringify(diagram_data, null, 2) }</div>${ consoleElement.innerHTML }`;
         // Reset button text
         this.innerHTML = buttonText;
-        return diagram_data
+        return diagram_data;
       }).then(diagram_data => {
         // Assign Diagram Tags 
         const dd = JSON.parse(diagram_data);
@@ -576,26 +579,26 @@ function migrateGPLFeaturesAsDiagrams() {
         if (gdhTagCodes.length > 0) {
 
           gdhAssignDiagramTagCodes(gdhProjectID, gdhApiToken, diagramID, gdhTagCodes).then(tagsAssigned => {
-            consoleElement.innerHTML = "Climate Actions successfully assigned to migrated Diagram.."
+            consoleElement.innerHTML = "Climate Actions successfully assigned to migrated Diagram..";
           })
-            .catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
+          .catch(error => consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`);
           // Wait for some time to prevent GDH DDOS tooling
           wait(250);
-          console.log("Submitted, waiting 250 ms..")
+          console.log("Submitted, waiting 250 ms..");
         }
         // Assign GPL Object ID 
 
         if (gplOriginalObjectID['notes'] !== 0) {
           gdhAssignDiagramNotes(gdhProjectID, gdhApiToken, diagramID, gplOriginalObjectID).then(notesUpdated => {
-            consoleElement.innerHTML = "Diagram notes updated.."
+            consoleElement.innerHTML = "Diagram notes updated..";
           })
-            .catch(error => consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`);
+          .catch(error => consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`);
           wait(100);
-          console.log("Waiting 100 ms..")
+          console.log("Waiting 100 ms..");
         }
 
       }).catch(error => {
-        consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
+        consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
         // Reset button text
         this.innerHTML = buttonText;
       });
@@ -612,7 +615,7 @@ function request404() {
   getPerson('not-found').then(() => {
     // Skipping as it will always fail
   }).catch(error => {
-    consoleElement.innerHTML = `<div>${error}</div>${consoleElement.innerHTML}`;
+    consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
     // Reset button text
     this.innerHTML = buttonText;
   });
@@ -630,7 +633,7 @@ function requestJsonError() {
     const errorContent = document.createElement('div');
     errorContent.innerText = error;
 
-    consoleElement.innerHTML = `<div>${errorContent.innerHTML}</div>${consoleElement.innerHTML}`;
+    consoleElement.innerHTML = `<div>${ errorContent.innerHTML }</div>${ consoleElement.innerHTML }`;
     // Reset button text
     this.innerHTML = buttonText;
   });
@@ -642,13 +645,13 @@ function arcGISOnlineSignIn() {
   const diagramReader = new DiagramReader();
 
   // SIGN IN TO ARCGIS ONLINE //
-  diagramReader.signIn().then(({ portal }) => {
+  diagramReader.signIn().then(({portal}) => {
     // console.info('DiagramReader::signIn', portal, diagramReader);
 
     //
     // AFTER WE'RE SIGNED IN WE LISTEN TO WHEN GEOJOSN FEATURES HAVE BEEN RETRIEVED //
     //
-    diagramReader.addEventListener('geoplanner-features', ({ detail: { sourceScenarioFeaturesGeoJSON } }) => {
+    diagramReader.addEventListener('geoplanner-features', ({detail: {sourceScenarioFeaturesGeoJSON}}) => {
       //console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
 
       //
@@ -722,32 +725,39 @@ function arcGISOnlineSignIn() {
 
           return list;
         }, []);
-
         //
         // FIRST PASS AT DISASSEMBLING A FEATURE INTO DIAGRAMS //
         //
-        // console.info(_diagramsGeoJSON);
+        console.info(_diagramsGeoJSON);
 
-        //
-        // SIMULATE NEGOTIATIONS BY SENDING BACK FIRST 10 DIAGRAMS //
-        //
-        // const designFeaturesAsEsriJSON = negotiate_in_geodesign_hub(_diagramsGeoJSON, 10);
-        const designFeaturesAsEsriJSON = _gdhNegotiatedDesignJSON;
+        /**
+         *
+         * @param gdhNegotiatedDesignJSON
+         */
+        this.migrateDesignAsNewGeoPlannerScenario = (gdhNegotiatedDesignJSON) => {
+          return new Promise((resolve, reject) => {
+            console.info("GDH design data to migrate: ", gdhNegotiatedDesignJSON);
 
-
-        // TESTING: DON'T TRANSFER ALL FEATURES OVER...
-        // const createNewGeoPlannerScenario = confirm('Create a new GeoPlanner Scenario?');
-        // if (createNewGeoPlannerScenario) {
-        //   //
-        //   // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
-        //   //
-        //   diagramReader.createNewGeoPlannerScenario({designFeaturesAsEsriJSON}).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
-        //     console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs, diagramReader);
-
-        //   }).catch(error => {
-        //     console.error('Diagram Reader createNewGeoPlannerScenario() Error: ', error);
-        //   });
-        // }
+            //
+            // SHOULD WE TRANSFER ALL FEATURES OVER?
+            //
+            const createNewGeoPlannerScenario = confirm('Create a new GeoPlanner Scenario?');
+            if (createNewGeoPlannerScenario) {
+              //
+              // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
+              //
+              diagramReader.createNewGeoPlannerScenario({
+                designFeaturesAsEsriJSON: gdhNegotiatedDesignJSON
+              }).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
+                console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs);
+                resolve();
+              }).catch(error => {
+                console.error('Diagram Reader createNewGeoPlannerScenario() Error: ', error);
+                reject(error);
+              });
+            }
+          });
+        };
       } else {
         console.warn('Diagram Reader - no features retrieved...');
       }
