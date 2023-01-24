@@ -133,7 +133,7 @@ class DiagramReaderUI extends EventTarget {
 
         const layerItemNode = document.createElement('option');
         layerItemNode.setAttribute('value', layerPortalItem.id);
-        layerItemNode.innerHTML = layerPortalItem.title; // `'${layerPortalItem.title}' owned by ${layerPortalItem.owner}`;
+        layerItemNode.innerHTML = layerPortalItem.title;
 
         return layerItemNode;
       });

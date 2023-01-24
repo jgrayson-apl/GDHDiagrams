@@ -499,8 +499,6 @@ class DiagramReader extends EventTarget {
           //             ALSO, WE CAN USE THE DESCRIPTION TO ADD ANY OTHER
           //             DESIGN RELATED METADATA
           //
-          //
-          //
           const newPortalItem = new PortalItem({
             type: this.sourcePortalItem.type,
             url: this.sourcePortalItem.url,
@@ -547,9 +545,7 @@ class DiagramReader extends EventTarget {
 
               // UPDATE ITEM DATA WITH NEW SUBLAYER DEFINITION
               // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#update
-              newScenarioPortalItem.update({
-                data: updatedLayerPortalItemData
-              }).then((updatedScenarioPortalItem) => {
+              newScenarioPortalItem.update({data: updatedLayerPortalItemData}).then((updatedScenarioPortalItem) => {
                 //console.info("UPDATED Scenario Portal Item: ", updatedScenarioPortalItem);
 
                 // VERIFY UPDATED SUBLAYER DEFINITION
