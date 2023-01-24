@@ -174,20 +174,19 @@ class DiagramReaderUI extends EventTarget {
       // DIAGRAM ATTRIBUTES //
       const diagramAttributes = diagramFeature.properties || diagramFeature.attributes;
 
-      // FEATURE ID //
-      const oid = diagramFeature.id || diagramAttributes.OBJECTID;
-
       // RELEVANT FEATURE/DIAGRAM PROPERTIES //
       const {
-        Geodesign_ProjectID,
-        Geodesign_ScenarioID,
+        // Geodesign_ProjectID,
+        // Geodesign_ScenarioID,
+        OBJECTID,
+        GLOBALID,
         ACTION_IDS
       } = diagramAttributes;
 
       // FEATURE/DIAGRAM ITEM //
       const diagramItem = document.createElement('div');
       diagramItem.classList.add('diagram-item');
-      diagramItem.innerHTML = `[ ${ oid } ] ${ ACTION_IDS }`;
+      diagramItem.innerHTML = `[ ${ GLOBALID } ] ${ ACTION_IDS }`;
       diagramItem.title = JSON.stringify(diagramFeature, null, 2);
 
       return diagramItem;

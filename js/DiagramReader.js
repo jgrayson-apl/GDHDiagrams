@@ -596,12 +596,18 @@ class DiagramReader extends EventTarget {
 
     // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
     return candidateFeatures.map(diagramFeature => {
+
+      const fixedGeometry = {
+        ...diagramFeature.geometry,
+        spatialReference: {wkid: 4326}
+      };
+
       return {
-        geometry: diagramFeature.geometry,
+        geometry: fixedGeometry,
         attributes: {
           Geodesign_ProjectID: projectID,
           Geodesign_ScenarioID: scenarioID,
-          SOURCE_ID: diagramFeature.attributes.notes,
+          // SOURCE_ID: diagramFeature.attributes.notes,
           ACTION_IDS: diagramFeature.attributes.tag_codes,
           name: diagramFeature.attributes.description
         }

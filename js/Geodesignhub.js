@@ -515,6 +515,8 @@ function getDesignJSONandMigrate() {
   gdhGetDesignESRIJSON(gdhProjectID, gdhApiToken, gdhDesignTeamID, gdhDesignID).then(designData => {
     // TODO: Migrate this design to GPL
 
+    console.info(designData)
+
     //
     // JG //
     // ONCE NEGOTIATED, WE'LL SEND THEM BACK AS A NEW SCENARIO //
