@@ -67,6 +67,7 @@ class DiagramReaderUI extends EventTarget {
 
     this.portalItemsList = document.getElementById('geoplanner-items-list');
     this.geoplannerItemsBtn = document.getElementById('geoplanner-items-btn');
+    this.geoplannerDeleteItemsBtn = document.getElementById('geoplanner-delete-btn');
 
     this.gdhDiagramsList = document.getElementById('gdh-diagrams-list');
 
@@ -132,7 +133,7 @@ class DiagramReaderUI extends EventTarget {
 
         const layerItemNode = document.createElement('option');
         layerItemNode.setAttribute('value', layerPortalItem.id);
-        layerItemNode.innerHTML = layerPortalItem.title;
+        layerItemNode.innerHTML = layerPortalItem.title; // `'${layerPortalItem.title}' owned by ${layerPortalItem.owner}`;
 
         return layerItemNode;
       });
@@ -144,10 +145,21 @@ class DiagramReaderUI extends EventTarget {
       this.portalItemsList.replaceChildren();
     }
 
+    this.portalItemsList.addEventListener('change', ()=>{
+      const layerPortalItem = this.#geoPlannerProjectGroupItems.find(item => item.id === this.portalItemsList.value);
+      this.geoplannerDeleteItemsBtn.toggleAttribute('hidden', (layerPortalItem.owner !== this.#portalUser.username));
+    })
+
     this.geoplannerItemsBtn.addEventListener('click', () => {
       const layerPortalItem = this.#geoPlannerProjectGroupItems.find(item => item.id === this.portalItemsList.value);
       this.dispatchEvent(new CustomEvent('portal-item-selected', {detail: {portalItem: layerPortalItem}}));
     });
+
+    this.geoplannerDeleteItemsBtn.addEventListener('click', () => {
+      const layerPortalItem = this.#geoPlannerProjectGroupItems.find(item => item.id === this.portalItemsList.value);
+      this.dispatchEvent(new CustomEvent('portal-item-delete', {detail: {portalItem: layerPortalItem}}));
+    });
+
   }
 
   /**

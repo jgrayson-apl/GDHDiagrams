@@ -267,6 +267,32 @@ class DiagramReader extends EventTarget {
 
             });
 
+            //
+            // DELETE GPL SCENARIO //
+            //
+            // https://developers.arcgis.com/rest/services-reference/enterprise/delete-features.htm
+            //
+            this.diagramReaderUI.addEventListener('portal-item-delete', ({detail: {portalItem}}) => {
+
+              // DELETE REST ENDPOINT //
+              const geoPlannerScenarioLayerDeleteUrl = `${ portalItem.url }/${ this.interventionLayerId }/deleteFeatures`;
+
+              // DELETE FEATURES //
+              esriRequest(geoPlannerScenarioLayerDeleteUrl, {
+                query: {
+                  where: `(Geodesign_ScenarioID = '${ portalItem.id }')`,
+                  f: 'json'
+                },
+                method: 'post'
+              }).then((deleteFeaturesResponse) => {
+                console.info("Delete Features: ", deleteFeaturesResponse.data.deleteResults);
+                this.portal.user.deleteItem(portalItem).then((deleteItemResponse) => {
+                  console.info("Delete Portal Item: ", deleteItemResponse);
+                }).catch(console.error);
+              }).catch(console.error);
+
+            });
+
             resolve({portal});
           }).catch(reject);
         }).catch(reject);
