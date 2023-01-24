@@ -169,6 +169,7 @@ class DiagramReader extends EventTarget {
                     resultOffset: startOffset,
                     where: queryFilter,
                     outFields: '*',
+                    outSR: 3857,
                     f: 'geojson'
                   }
                 }).then((response) => {
@@ -597,13 +598,8 @@ class DiagramReader extends EventTarget {
     // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
     return candidateFeatures.map(diagramFeature => {
 
-      const fixedGeometry = {
-        ...diagramFeature.geometry,
-        spatialReference: {wkid: 4326}
-      };
-
       return {
-        geometry: fixedGeometry,
+        geometry: diagramFeature.geometry,
         attributes: {
           Geodesign_ProjectID: projectID,
           Geodesign_ScenarioID: scenarioID,
