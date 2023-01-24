@@ -120,7 +120,8 @@ import DiagramReader from './DiagramReader.js';
 //
 
 // TODO: Change this to live GDH URL.
-const API_URL = 'http://local.test:8000/api/v1';
+// const API_URL = 'http://local.test:8000/api/v1';
+const API_URL = 'https://www.geodesignhub.com/api/v1';
 let _gdhNegotiatedDesignJSON = null;
 // JG //
 let _sourceScenarioFeaturesGeoJSON = null;
@@ -551,10 +552,6 @@ function migrateGPLFeaturesAsDiagrams() {
     }
 
     var postJson = { "featuretype": geoJSONGeometryType, "description": gdhDiagramName, "geometry": gj_feature_collection };
-
-    if (index == 1) {
-      break;
-    }
 
     let gplOriginalObjectID = { 'notes': 0 }
     if (current_diagram_feature.properties.hasOwnProperty("OBJECTID")) {
