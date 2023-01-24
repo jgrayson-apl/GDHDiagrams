@@ -190,10 +190,6 @@ class DiagramReaderUI extends EventTarget {
       diagramItem.innerHTML = `[ ${ oid } ] ${ ACTION_IDS }`;
       diagramItem.title = JSON.stringify(diagramFeature, null, 2);
 
-      //const geometryParts = diagramFeature.geometry.coordinates || diagramFeature.geometry.rings;
-      // const isMultiPartGeometry = (geometryParts.length > 1);
-      // isMultiPartGeometry && diagramItem.classList.add('multipart');
-
       return diagramItem;
     });
     // ADD DIAGRAMS TO LIST //

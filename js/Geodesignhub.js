@@ -110,6 +110,11 @@ function rewindRing(ring, dir) {
  */
 import DiagramReader from './DiagramReader.js';
 
+// NEW INSTANCE OF DIAGRAM READER //
+const diagramReader = new DiagramReader();
+console.info("Diagram Reader created...");
+
+
 //
 //
 //
@@ -118,8 +123,8 @@ import DiagramReader from './DiagramReader.js';
 //
 //
 
-const API_URL = 'https://www.geodesignhub.com/api/v1/'; // http://local.test:8000/api/v1
-const API_TOKEN = 'a61a3bff7a7210f7b01997b80e796dd8dffe1a90';  // c0ae02b64a7e0ca453231143ae2fe2d8202e51e8 | a61a3bff7a7210f7b01997b80e796dd8dffe1a90
+const API_URL = 'https://www.geodesignhub.com/api/v1'; // http://local.test:8000/api/v1
+const API_TOKEN = 'c0ae02b64a7e0ca453231143ae2fe2d8202e51e8';  // c0ae02b64a7e0ca453231143ae2fe2d8202e51e8 | a61a3bff7a7210f7b01997b80e796dd8dffe1a90
 const PROJECT_ID = '184cd61c05e0e2c7';
 
 const useIGCSpecificBridgeExtensions = 1;
@@ -162,7 +167,7 @@ const fetchResource = (path, userOptions = {}) => {
   // Define default options
   const defaultOptions = {};  // mode: 'no-cors'
   // Define default headers
-  const defaultHeaders = { };
+  const defaultHeaders = {};
 
   const options = {
     // Merge options
@@ -510,13 +515,21 @@ function getDesignJSONandMigrate() {
   gdhGetDesignESRIJSON(gdhProjectID, gdhApiToken, gdhDesignTeamID, gdhDesignID).then(designData => {
     // TODO: Migrate this design to GPL
 
-    this.migrateDesignAsNewGeoPlannerScenario(designData, gdhDesignTeamID, gdhDesignID).then(() => {
+    //
+    // JG //
+    // ONCE NEGOTIATED, WE'LL SEND THEM BACK AS A NEW SCENARIO //
+    //
+    diagramReader.createNewGeoPlannerScenario({
+      designFeaturesAsEsriJSON: designData,
+      designTeamID: gdhDesignTeamID,
+      designID: gdhDesignID
+    }).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
       this.innerHTML = 'Migration complete..';
-
     }).catch(error => {
       consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
       this.innerHTML = buttonText;
     });
+
   }).catch(error => {
     consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
     // Reset button text
@@ -566,9 +579,10 @@ function migrateGPLFeaturesAsDiagrams() {
       break;
     }
 
-    let gplOriginalObjectID = {'notes': 0};
-    if (current_diagram_feature.properties.hasOwnProperty("OBJECTID")) {
-      gplOriginalObjectID['notes'] = current_diagram_feature.properties.OBJECTID;
+    // JG - CHARLIE NEEDS GLOBALID //
+    let gplOriginalObjectID = {'notes': null};
+    if (current_diagram_feature.properties.hasOwnProperty("GLOBALID")) {
+      gplOriginalObjectID['notes'] = current_diagram_feature.properties.GLOBALID;
     }
 
     if (gdhSystemID !== 0) {
@@ -594,11 +608,10 @@ function migrateGPLFeaturesAsDiagrams() {
         }
         // Assign GPL Object ID 
 
-        if (gplOriginalObjectID['notes'] !== 0) {
+        if (gplOriginalObjectID['notes'] != null) {
           gdhAssignDiagramNotes(gdhProjectID, gdhApiToken, diagramID, gplOriginalObjectID).then(notesUpdated => {
             consoleElement.innerHTML = "Diagram notes updated..";
-          })
-          .catch(error => consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`);
+          }).catch(error => consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`);
           wait(100);
           console.log("Waiting 100 ms..");
         }
@@ -646,9 +659,6 @@ function requestJsonError() {
 }
 
 function arcGISOnlineSignIn() {
-
-  // NEW INSTANCE OF DIAGRAM READER //
-  const diagramReader = new DiagramReader();
 
   // SIGN IN TO ARCGIS ONLINE //
   diagramReader.signIn().then(({portal}) => {
@@ -727,38 +737,6 @@ function arcGISOnlineSignIn() {
           return list;
         }, []);
 
-        /**
-         *
-         * @param gdhNegotiatedDesignJSON
-         * @param gdhDesignTeamID
-         * @param gdhDesignID
-         */
-        this.migrateDesignAsNewGeoPlannerScenario = (gdhNegotiatedDesignJSON, gdhDesignTeamID, gdhDesignID) => {
-          return new Promise((resolve, reject) => {
-            console.info("GDH design data to migrate: ", gdhNegotiatedDesignJSON);
-
-            //
-            // SHOULD WE TRANSFER ALL FEATURES OVER?
-            //
-            const createNewGeoPlannerScenario = confirm('Create a new GeoPlanner Scenario?');
-            if (createNewGeoPlannerScenario) {
-              //
-              // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
-              //
-              diagramReader.createNewGeoPlannerScenario({
-                designFeaturesAsEsriJSON: gdhNegotiatedDesignJSON,
-                designTeamID: gdhDesignTeamID,
-                designID: gdhDesignID
-              }).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
-                console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs);
-                resolve();
-              }).catch(error => {
-                console.error('Diagram Reader createNewGeoPlannerScenario() Error: ', error);
-                reject(error);
-              });
-            }
-          });
-        };
       } else {
         console.warn('Diagram Reader - no features retrieved...');
       }
