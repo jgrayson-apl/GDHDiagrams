@@ -120,9 +120,7 @@ import DiagramReader from './DiagramReader.js';
 
 // TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:8000/api/v1';
-//let _gdhNegotiatedDesignJSON = null;
 // JG //
-let _sourceScenarioFeaturesGeoJSON = null;
 let _diagramsGeoJSON = null;
 const useIGCSpecificBridgeExtensions = 1;
 let _allGDHSystems = null;
@@ -654,13 +652,8 @@ function arcGISOnlineSignIn() {
     diagramReader.addEventListener('geoplanner-features', ({detail: {sourceScenarioFeaturesGeoJSON}}) => {
       //console.info('DiagramReader:::geoplanner-features', sourceScenarioFeaturesGeoJSON, diagramReader);
 
-      //
-      // SET LOCAL VARIABLE ACCESSIBLE TO OTHER FUNCTIONS //
-      //
-      _sourceScenarioFeaturesGeoJSON = sourceScenarioFeaturesGeoJSON;
-
       // DID WE CONVERT ANY FEATURES //
-      if (_sourceScenarioFeaturesGeoJSON.length) {
+      if (sourceScenarioFeaturesGeoJSON.length) {
 
         const gdhMigrationCont = document.getElementById('geodesignhub_migration_cont');
         gdhMigrationCont.removeAttribute("hidden");
@@ -690,7 +683,7 @@ function arcGISOnlineSignIn() {
         // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
         // BASED ON THE SYSTEM. WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN SOURCE SCENARIO FEATURES
         //
-        _diagramsGeoJSON = _sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {
+        _diagramsGeoJSON = sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {
 
           // GET LIST OF ALL CLIMATE ACTIONS FOR EACH FEATURE //
           const actions = feature.properties.ACTION_IDS.split('|');
@@ -725,10 +718,6 @@ function arcGISOnlineSignIn() {
 
           return list;
         }, []);
-        //
-        // FIRST PASS AT DISASSEMBLING A FEATURE INTO DIAGRAMS //
-        //
-        console.info(_diagramsGeoJSON);
 
         /**
          *
@@ -761,9 +750,7 @@ function arcGISOnlineSignIn() {
       } else {
         console.warn('Diagram Reader - no features retrieved...');
       }
-
     });
-
   }).catch(error => {
     console.error("Diagram Reader initialize() Error: ", error);
   });
