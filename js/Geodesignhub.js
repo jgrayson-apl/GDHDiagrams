@@ -120,10 +120,11 @@ import DiagramReader from './DiagramReader.js';
 
 // TODO: Change this to live GDH URL.
 const API_URL = 'http://local.test:8000/api/v1';
-// JG //
-let _diagramsGeoJSON = null;
 const useIGCSpecificBridgeExtensions = 1;
 let _allGDHSystems = null;
+
+// JG //
+let _diagramsGeoJSON = null;
 
 // Custom API error to throw
 function ApiError(message, data, status) {
