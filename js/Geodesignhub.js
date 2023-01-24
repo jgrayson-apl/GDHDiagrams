@@ -510,7 +510,7 @@ function getDesignJSONandMigrate() {
   gdhGetDesignESRIJSON(gdhProjectID, gdhApiToken, gdhDesignTeamID, gdhDesignID).then(designData => {
     // TODO: Migrate this design to GPL
 
-    this.migrateDesignAsNewGeoPlannerScenario(designData).then(() => {
+    this.migrateDesignAsNewGeoPlannerScenario(designData, gdhDesignTeamID, gdhDesignID).then(() => {
       this.innerHTML = 'Migration complete..';
 
     }).catch(error => {
@@ -730,8 +730,10 @@ function arcGISOnlineSignIn() {
         /**
          *
          * @param gdhNegotiatedDesignJSON
+         * @param gdhDesignTeamID
+         * @param gdhDesignID
          */
-        this.migrateDesignAsNewGeoPlannerScenario = (gdhNegotiatedDesignJSON) => {
+        this.migrateDesignAsNewGeoPlannerScenario = (gdhNegotiatedDesignJSON, gdhDesignTeamID, gdhDesignID) => {
           return new Promise((resolve, reject) => {
             console.info("GDH design data to migrate: ", gdhNegotiatedDesignJSON);
 
@@ -744,7 +746,9 @@ function arcGISOnlineSignIn() {
               // ONCE NEGOTIATED, WE'LL HAVE TO SEND THEM BACK AS A NEW SCENARIO
               //
               diagramReader.createNewGeoPlannerScenario({
-                designFeaturesAsEsriJSON: gdhNegotiatedDesignJSON
+                designFeaturesAsEsriJSON: gdhNegotiatedDesignJSON,
+                designTeamID: gdhDesignTeamID,
+                designID: gdhDesignID
               }).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
                 console.info('DiagramReader:::createNewGeoPlannerScenario', newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs);
                 resolve();

@@ -437,16 +437,18 @@ class DiagramReader extends EventTarget {
   /**
    *
    * @param {Graphic[]} designFeaturesAsEsriJSON
+   * @param {string} designTeamID
+   * @param {string} designID
    * @returns {Promise<{newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}>}
    */
-  createNewGeoPlannerScenario({designFeaturesAsEsriJSON}) {
+  createNewGeoPlannerScenario({designFeaturesAsEsriJSON, designTeamID, designID}) {
     return new Promise((resolve, reject) => {
 
       //
       // CREATE TARGET SCENARIO PORTAL ITEM //
       //  - THIS WILL GIVE US THE NECESSARY NEW SCENARIO ID...
       //
-      this._createNewGeoPlannerScenarioPortalItem().then(({newPortalItem, scenarioID, scenarioFilter}) => {
+      this._createNewGeoPlannerScenarioPortalItem({designTeamID, designID}).then(({newPortalItem, scenarioID, scenarioFilter}) => {
 
         // UPDATE NEW SCENARIO FEATURES //
         //
@@ -468,9 +470,12 @@ class DiagramReader extends EventTarget {
    *
    * PortalItem: https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html
    *
+   * @param {string} designTeamID
+   * @param {string} designID
    * @returns {Promise<{newPortalItem: PortalItem, scenarioID: string, scenarioFilter: string}>}
+   * @private
    */
-  _createNewGeoPlannerScenarioPortalItem() {
+  _createNewGeoPlannerScenarioPortalItem({designTeamID, designID}) {
     return new Promise((resolve, reject) => {
       require([
         'esri/request',
@@ -499,9 +504,9 @@ class DiagramReader extends EventTarget {
           const newPortalItem = new PortalItem({
             type: this.sourcePortalItem.type,
             url: this.sourcePortalItem.url,
-            title: `${ this.sourcePortalItem.title } - GDH Design [${ (new Date()).valueOf() }]`,
+            title: `${ this.sourcePortalItem.title } - ${designID} - ${designTeamID}`,
             snippet: `${ this.sourcePortalItem.snippet || '' } - GDH Negotiated Design`,
-            description: `${ this.sourcePortalItem.description || '' } - The GDH negotiated design.`,
+            description: `${ this.sourcePortalItem.description || '' } - The GDH negotiated design ${designID} from team ${designTeamID}.`,
             accessInformation: this.sourcePortalItem.accessInformation,
             typeKeywords: this.sourcePortalItem.typeKeywords, // THE PROJECT ID WILL BE IN ONE OF THE TYPEKEYWORDS
             tags: this.sourcePortalItem.tags.concat('GDH')    // ADD GDH TAG TO IDENTIFY WHICH SCENARIOS CAME FROM GDH

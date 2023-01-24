@@ -147,7 +147,7 @@ class DiagramReaderUI extends EventTarget {
 
     this.portalItemsList.addEventListener('change', ()=>{
       const layerPortalItem = this.#geoPlannerProjectGroupItems.find(item => item.id === this.portalItemsList.value);
-      this.geoplannerDeleteItemsBtn.toggleAttribute('hidden', (layerPortalItem.owner !== this.#portalUser.username));
+      this.geoplannerDeleteItemsBtn.toggleAttribute('hidden', !(layerPortalItem.owner === this.#portalUser?.username));
     })
 
     this.geoplannerItemsBtn.addEventListener('click', () => {
