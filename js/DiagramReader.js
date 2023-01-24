@@ -579,7 +579,7 @@ class DiagramReader extends EventTarget {
       diagramAttributes.SOURCE_ID = diagramAttributes.GLOBALID;
 
       //
-      // TODO: DO DELETE ALL OTHER KPI-BASED ATTRIBUTES OR LEAVE THEM AS-IS? //
+      // TODO: DO DELETE ALL OTHER KPI-BASED ATTRIBUTES ...OR... LEAVE THEM AS-IS? //
       //
 
       // - NEW OBJECTID AND GLOBALID WILL BE ASSIGNED BY FEATURE LAYER WHEN ADDED //
