@@ -27,8 +27,8 @@ class DiagramReader extends EventTarget {
    */
   static CONFIG = {
     PORTAL_URL: "https://www.arcgis.com/",
-    OAUTH_APP_ID: "L7TzVXFYcEkBe7qz"  // HB //
-    // OAUTH_APP_ID: "PZdAgiu187TroTCX"    // JG //
+    // OAUTH_APP_ID: "L7TzVXFYcEkBe7qz"  // HB //
+    OAUTH_APP_ID: "PZdAgiu187TroTCX"    // JG //
   };
 
   /**
@@ -168,7 +168,7 @@ class DiagramReader extends EventTarget {
                   query: {
                     resultOffset: startOffset,
                     where: queryFilter,
-                    outFields: '*',                      
+                    outFields: '*',
                     f: 'geojson'
                   }
                 }).then((response) => {
@@ -455,11 +455,10 @@ class DiagramReader extends EventTarget {
         // - TODO: THESE MODIFICATIONS WILL HAVE TO HAPPEN AND WILL CHANGE AS WE MOVE THE PROJECT FORWARD...
         //
         const updatedDesignFeaturesAsEsriJSON = this._updateScenarioCandidates(designFeaturesAsEsriJSON, projectID, scenarioID);
+        console.info("Updated negotiated GDH diagrams as Esri features: ", updatedDesignFeaturesAsEsriJSON);
 
         // ADD NEW GEOPLANNER SCENARIO FEATURES //
         this._addNewGeoPlannerScenarioFeatures({designFeaturesAsEsriJSON: updatedDesignFeaturesAsEsriJSON, newPortalItem}).then(({addFeaturesOIDs}) => {
-          //console.info('New GeoPlanner Scenario Features: ', addFeaturesOIDs);
-
           resolve({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs});
         }).catch(reject);
       }).catch(reject);
@@ -583,6 +582,20 @@ class DiagramReader extends EventTarget {
   }
 
   /**
+   * https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
+   *
+   * - three possible variations...
+   *
+   * @returns {string}
+   */
+  _createGUID() {
+    const url = URL.createObjectURL(new Blob());
+    const [id] = url.toString().split('/').reverse();
+    URL.revokeObjectURL(url);
+    return `{${ id }}`;  // id.replace(/-/g,'')
+  };
+
+  /**
    * THESE ARE UPDATES THAT WILL HAVE TO BE MADE TO ALL SCENARIO FEATURES BEFORE
    * ADDING THEM BACK TO THE FEATURE LAYER
    *
@@ -590,15 +603,19 @@ class DiagramReader extends EventTarget {
    * @param {{}[]} candidateFeatures
    * @param {string} projectID
    * @param {string} scenarioID
-   * @returns {Graphic[]}
+   * @returns {{geometry:{}, attributes:{}}[]}
    */
   _updateScenarioCandidates(candidateFeatures, projectID, scenarioID) {
 
-    // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
-    return candidateFeatures.map(diagramFeature => {
-
+    //
+    // CREATE A FEATURE FOR EACH DIAGRAM //
+    // - NOTE: ONLY FEATURES WITH POLYGON GEOMETRIES ALLOWED CURRENTLY...
+    //
+    return candidateFeatures.filter(diagramFeature => {
+      return (diagramFeature.geometry.rings != null);
+    }).map(diagramFeature => {
       return {
-        geometry: diagramFeature.geometry,
+        geometry:  diagramFeature.geometry,
         attributes: {
           Geodesign_ProjectID: projectID,
           Geodesign_ScenarioID: scenarioID,
@@ -630,6 +647,7 @@ class DiagramReader extends EventTarget {
         esriRequest(geoPlannerScenarioLayerApplyEditsUrl, {
           query: {
             adds: JSON.stringify(designFeaturesAsEsriJSON),
+            //rollbackOnFailure: false,
             f: 'json'
           },
           method: 'post'

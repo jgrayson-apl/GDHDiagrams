@@ -122,7 +122,7 @@ console.info("Diagram Reader created...");
 //
 //
 
-const API_URL = 'https://www.geodesignhub.com/api/v1'; 
+const API_URL = 'https://www.geodesignhub.com/api/v1';
 // const API_URL = 'http://local.test:8000/api/v1'
 
 const useIGCSpecificBridgeExtensions = 1;
@@ -512,7 +512,7 @@ function getDesignJSONandMigrate() {
     //
     // TODO: Migrate this design to GPL
     //
-    console.info(designData);
+    console.info("Negotiated GDH diagrams as Esri features: ", designData);
 
     //
     // JG //
@@ -523,7 +523,7 @@ function getDesignJSONandMigrate() {
       designTeamID: gdhDesignTeamID,
       designID: gdhDesignID
     }).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
-
+      console.info('New GeoPlanner Scenario Feature OIDs: ', addFeaturesOIDs);
       this.innerHTML = 'Migration complete..';
 
     }).catch(error => {
