@@ -512,7 +512,7 @@ function getDesignJSONandMigrate() {
     //
     // TODO: Migrate this design to GPL
     //
-    console.info("Negotiated GDH diagrams as Esri features: ", designData);
+    console.info("Source negotiated GDH diagrams as Esri features: ", designData);
 
     //
     // JG //
@@ -524,6 +524,10 @@ function getDesignJSONandMigrate() {
       designID: gdhDesignID
     }).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
       console.info('New GeoPlanner Scenario Feature OIDs: ', addFeaturesOIDs);
+
+      const mapUrl = `https://igcollab.maps.arcgis.com/apps/mapviewer/index.html?layers=${ scenarioID }`;
+      consoleElement.innerHTML = `New GPL Scenario: <a href="${mapUrl}" target="_blank">view</a>`
+
       this.innerHTML = 'Migration complete..';
 
     }).catch(error => {
