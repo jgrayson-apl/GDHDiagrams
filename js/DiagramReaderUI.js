@@ -67,6 +67,7 @@ class DiagramReaderUI extends EventTarget {
 
     this.portalItemsList = document.getElementById('geoplanner-items-list');
     this.geoplannerItemsBtn = document.getElementById('geoplanner-items-btn');
+    this.geoplannerDeleteItemsBtn = document.getElementById('geoplanner-delete-btn');
 
     this.gdhDiagramsList = document.getElementById('gdh-diagrams-list');
 
@@ -144,10 +145,21 @@ class DiagramReaderUI extends EventTarget {
       this.portalItemsList.replaceChildren();
     }
 
+    this.portalItemsList.addEventListener('change', ()=>{
+      const layerPortalItem = this.#geoPlannerProjectGroupItems.find(item => item.id === this.portalItemsList.value);
+      this.geoplannerDeleteItemsBtn.toggleAttribute('hidden', !(layerPortalItem.owner === this.#portalUser?.username));
+    })
+
     this.geoplannerItemsBtn.addEventListener('click', () => {
       const layerPortalItem = this.#geoPlannerProjectGroupItems.find(item => item.id === this.portalItemsList.value);
       this.dispatchEvent(new CustomEvent('portal-item-selected', {detail: {portalItem: layerPortalItem}}));
     });
+
+    this.geoplannerDeleteItemsBtn.addEventListener('click', () => {
+      const layerPortalItem = this.#geoPlannerProjectGroupItems.find(item => item.id === this.portalItemsList.value);
+      this.dispatchEvent(new CustomEvent('portal-item-delete', {detail: {portalItem: layerPortalItem}}));
+    });
+
   }
 
   /**
@@ -162,25 +174,20 @@ class DiagramReaderUI extends EventTarget {
       // DIAGRAM ATTRIBUTES //
       const diagramAttributes = diagramFeature.properties || diagramFeature.attributes;
 
-      // FEATURE ID //
-      const oid = diagramFeature.id || diagramAttributes.OBJECTID;
-
       // RELEVANT FEATURE/DIAGRAM PROPERTIES //
       const {
-        Geodesign_ProjectID,
-        Geodesign_ScenarioID,
+        // Geodesign_ProjectID,
+        // Geodesign_ScenarioID,
+        OBJECTID,
+        GLOBALID,
         ACTION_IDS
       } = diagramAttributes;
 
       // FEATURE/DIAGRAM ITEM //
       const diagramItem = document.createElement('div');
       diagramItem.classList.add('diagram-item');
-      diagramItem.innerHTML = `[ ${ oid } ] ${ ACTION_IDS }`;
+      diagramItem.innerHTML = `[ ${ GLOBALID } ] ${ ACTION_IDS }`;
       diagramItem.title = JSON.stringify(diagramFeature, null, 2);
-
-      //const geometryParts = diagramFeature.geometry.coordinates || diagramFeature.geometry.rings;
-      // const isMultiPartGeometry = (geometryParts.length > 1);
-      // isMultiPartGeometry && diagramItem.classList.add('multipart');
 
       return diagramItem;
     });

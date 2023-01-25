@@ -169,6 +169,7 @@ class DiagramReader extends EventTarget {
                     resultOffset: startOffset,
                     where: queryFilter,
                     outFields: '*',
+                    outSR: 3857,
                     f: 'geojson'
                   }
                 }).then((response) => {
@@ -264,6 +265,32 @@ class DiagramReader extends EventTarget {
 
                 });
               });
+
+            });
+
+            //
+            // DELETE GPL SCENARIO //
+            //
+            // https://developers.arcgis.com/rest/services-reference/enterprise/delete-features.htm
+            //
+            this.diagramReaderUI.addEventListener('portal-item-delete', ({detail: {portalItem}}) => {
+
+              // DELETE REST ENDPOINT //
+              const geoPlannerScenarioLayerDeleteUrl = `${ portalItem.url }/${ this.interventionLayerId }/deleteFeatures`;
+
+              // DELETE FEATURES //
+              esriRequest(geoPlannerScenarioLayerDeleteUrl, {
+                query: {
+                  where: `(Geodesign_ScenarioID = '${ portalItem.id }')`,
+                  f: 'json'
+                },
+                method: 'post'
+              }).then((deleteFeaturesResponse) => {
+                console.info("Delete Features: ", deleteFeaturesResponse.data.deleteResults);
+                this.portal.user.deleteItem(portalItem).then(() => {
+                  console.info("Portal Item deleted");
+                }).catch(console.error);
+              }).catch(console.error);
 
             });
 
@@ -411,22 +438,24 @@ class DiagramReader extends EventTarget {
   /**
    *
    * @param {Graphic[]} designFeaturesAsEsriJSON
+   * @param {string} designTeamID
+   * @param {string} designID
    * @returns {Promise<{newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}>}
    */
-  createNewGeoPlannerScenario({designFeaturesAsEsriJSON}) {
+  createNewGeoPlannerScenario({designFeaturesAsEsriJSON, designTeamID, designID}) {
     return new Promise((resolve, reject) => {
 
       //
       // CREATE TARGET SCENARIO PORTAL ITEM //
       //  - THIS WILL GIVE US THE NECESSARY NEW SCENARIO ID...
       //
-      this._createNewGeoPlannerScenarioPortalItem().then(({newPortalItem, scenarioID, scenarioFilter}) => {
+      this._createNewGeoPlannerScenarioPortalItem({designTeamID, designID}).then(({newPortalItem, projectID, scenarioID, scenarioFilter}) => {
 
         // UPDATE NEW SCENARIO FEATURES //
         //
         // - TODO: THESE MODIFICATIONS WILL HAVE TO HAPPEN AND WILL CHANGE AS WE MOVE THE PROJECT FORWARD...
         //
-        const updatedDesignFeaturesAsEsriJSON = this._updateScenarioCandidates(designFeaturesAsEsriJSON, scenarioID);
+        const updatedDesignFeaturesAsEsriJSON = this._updateScenarioCandidates(designFeaturesAsEsriJSON, projectID, scenarioID);
 
         // ADD NEW GEOPLANNER SCENARIO FEATURES //
         this._addNewGeoPlannerScenarioFeatures({designFeaturesAsEsriJSON: updatedDesignFeaturesAsEsriJSON, newPortalItem}).then(({addFeaturesOIDs}) => {
@@ -442,9 +471,12 @@ class DiagramReader extends EventTarget {
    *
    * PortalItem: https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html
    *
-   * @returns {Promise<{newPortalItem: PortalItem, scenarioID: string, scenarioFilter: string}>}
+   * @param {string} designTeamID
+   * @param {string} designID
+   * @returns {Promise<{newPortalItem: PortalItem, projectID: string, scenarioID: string, scenarioFilter: string}>}
+   * @private
    */
-  _createNewGeoPlannerScenarioPortalItem() {
+  _createNewGeoPlannerScenarioPortalItem({designTeamID, designID}) {
     return new Promise((resolve, reject) => {
       require([
         'esri/request',
@@ -468,15 +500,13 @@ class DiagramReader extends EventTarget {
           //             ALSO, WE CAN USE THE DESCRIPTION TO ADD ANY OTHER
           //             DESIGN RELATED METADATA
           //
-          //
-          //
           const newPortalItem = new PortalItem({
             type: this.sourcePortalItem.type,
             url: this.sourcePortalItem.url,
-            title: `${ this.sourcePortalItem.title } - GDH Design [${ (new Date()).valueOf() }]`,
+            title: `${ this.sourcePortalItem.title } - ${ designID } - ${ designTeamID }`,
             snippet: `${ this.sourcePortalItem.snippet || '' } - GDH Negotiated Design`,
-            description: `${ this.sourcePortalItem.description || '' } - The GDH negotiated design.`,
-            accessInformation: this.sourcePortalItem.accessInformation,
+            description: `${ this.sourcePortalItem.description || '' } - The GDH negotiated design ${ designID } from team ${ designTeamID }.`,
+            accessInformation: this.sourcePortalItem.accessInformation || 'FOR USE BY IGC ONLY',
             typeKeywords: this.sourcePortalItem.typeKeywords, // THE PROJECT ID WILL BE IN ONE OF THE TYPEKEYWORDS
             tags: this.sourcePortalItem.tags.concat('GDH')    // ADD GDH TAG TO IDENTIFY WHICH SCENARIOS CAME FROM GDH
           });
@@ -516,9 +546,7 @@ class DiagramReader extends EventTarget {
 
               // UPDATE ITEM DATA WITH NEW SUBLAYER DEFINITION
               // - https://developers.arcgis.com/javascript/latest/api-reference/esri-portal-PortalItem.html#update
-              newScenarioPortalItem.update({
-                data: updatedLayerPortalItemData
-              }).then((updatedScenarioPortalItem) => {
+              newScenarioPortalItem.update({data: updatedLayerPortalItemData}).then((updatedScenarioPortalItem) => {
                 //console.info("UPDATED Scenario Portal Item: ", updatedScenarioPortalItem);
 
                 // VERIFY UPDATED SUBLAYER DEFINITION
@@ -542,7 +570,7 @@ class DiagramReader extends EventTarget {
                     method: 'post'
                   }).then((response) => {
 
-                    resolve({newPortalItem: updatedScenarioPortalItem, scenarioID, scenarioFilter});
+                    resolve({newPortalItem: updatedScenarioPortalItem, projectID, scenarioID, scenarioFilter});
 
                   }).catch(console.error);
                 }).catch(console.error);
@@ -560,36 +588,26 @@ class DiagramReader extends EventTarget {
    * ADDING THEM BACK TO THE FEATURE LAYER
    *
    *
-   * @param {{}[]} candidateFeatures array of features (GeoJSON or Esri JSON)
+   * @param {{}[]} candidateFeatures
+   * @param {string} projectID
    * @param {string} scenarioID
    * @returns {Graphic[]}
    */
-  _updateScenarioCandidates(candidateFeatures, scenarioID) {
+  _updateScenarioCandidates(candidateFeatures, projectID, scenarioID) {
 
     // CREATE AN ITEM FOR EACH FEATURE/DIAGRAM //
     return candidateFeatures.map(diagramFeature => {
 
-      // DIAGRAM ATTRIBUTES //
-      const diagramAttributes = diagramFeature.properties || diagramFeature.attributes;
-
-      // ASSIGN NEW GEOPLANNER SCENARIO ID //
-      diagramAttributes.Geodesign_ScenarioID = scenarioID;
-
-      // ...WHEN AVAILABLE WE'LL MAINTAIN THE OBJECTID IN SOME OTHER FIELD... //
-      diagramAttributes.SOURCE_ID = diagramAttributes.GLOBALID;
-
-      //
-      // TODO: DO DELETE ALL OTHER KPI-BASED ATTRIBUTES ...OR... LEAVE THEM AS-IS? //
-      //
-
-      // - NEW OBJECTID AND GLOBALID WILL BE ASSIGNED BY FEATURE LAYER WHEN ADDED //
-      delete diagramAttributes.OBJECTID;
-      delete diagramAttributes.GLOBALID;
-      // DELETE SYSTEM FIELDS //
-      delete diagramAttributes.Shape__Area;
-      delete diagramAttributes.Shape__Length;
-
-      return diagramFeature;
+      return {
+        geometry: diagramFeature.geometry,
+        attributes: {
+          Geodesign_ProjectID: projectID,
+          Geodesign_ScenarioID: scenarioID,
+          SOURCE_ID: diagramFeature.attributes.notes,
+          ACTION_IDS: diagramFeature.attributes.tag_codes,
+          name: diagramFeature.attributes.description
+        }
+      };
     });
 
   }
@@ -624,6 +642,7 @@ class DiagramReader extends EventTarget {
           // LIST OF OBJECTIDS OF NEWLY ADDED FEATURES //
           // - APPLY EDITS RETURNS THE NEW OBJECTIDS OF ADDED FEATURES - OR ERROR IF FAILED //
           const addFeaturesOIDs = addResults.reduce((oids, addFeatureResult) => {
+            console.assert(!addFeatureResult.error, addFeatureResult.error);
             return addFeatureResult.error ? oids : oids.concat(addFeatureResult.objectId);
           }, []);
 
