@@ -582,20 +582,6 @@ class DiagramReader extends EventTarget {
   }
 
   /**
-   * https://stackoverflow.com/questions/105034/how-do-i-create-a-guid-uuid
-   *
-   * - three possible variations...
-   *
-   * @returns {string}
-   */
-  _createGUID() {
-    const url = URL.createObjectURL(new Blob());
-    const [id] = url.toString().split('/').reverse();
-    URL.revokeObjectURL(url);
-    return `{${ id }}`;  // id.replace(/-/g,'')
-  };
-
-  /**
    * THESE ARE UPDATES THAT WILL HAVE TO BE MADE TO ALL SCENARIO FEATURES BEFORE
    * ADDING THEM BACK TO THE FEATURE LAYER
    *
@@ -615,7 +601,7 @@ class DiagramReader extends EventTarget {
       return (diagramFeature.geometry.rings != null);
     }).map(diagramFeature => {
       return {
-        geometry:  diagramFeature.geometry,
+        geometry: diagramFeature.geometry,
         attributes: {
           Geodesign_ProjectID: projectID,
           Geodesign_ScenarioID: scenarioID,
