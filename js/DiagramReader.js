@@ -501,9 +501,9 @@ class DiagramReader extends EventTarget {
           const newPortalItem = new PortalItem({
             type: this.sourcePortalItem.type,
             url: this.sourcePortalItem.url,
-            title: `GDH Team: ${ designTeamName } | Design: ${ designName }`,
-            snippet: `A GDH negotiated design by team ${designTeamName}`,
-            description: `${ this.sourcePortalItem.description || '' } - The GDH negotiated design ${ designName } by team ${ designTeamName }.`,
+            title: `GDH design ${ designName } by team ${ designTeamName }`,
+            snippet: `GDH negotiated design by team ${designTeamName}`,
+            description: `The GDH negotiated design ${ designName } by team ${ designTeamName }.`,
             accessInformation: this.sourcePortalItem.accessInformation || 'FOR USE BY IGC ONLY',
             typeKeywords: this.sourcePortalItem.typeKeywords, // THE PROJECT ID WILL BE IN ONE OF THE TYPEKEYWORDS
             tags: this.sourcePortalItem.tags.concat('GDH')    // ADD GDH TAG TO IDENTIFY WHICH SCENARIOS CAME FROM GDH
