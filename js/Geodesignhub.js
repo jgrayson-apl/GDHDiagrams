@@ -122,9 +122,8 @@ console.info("Diagram Reader created...");
 //
 //
 
-const API_URL = 'https://www.geodesignhub.com/api/v1'; // http://local.test:8000/api/v1
-const API_TOKEN = 'c0ae02b64a7e0ca453231143ae2fe2d8202e51e8';  // c0ae02b64a7e0ca453231143ae2fe2d8202e51e8 | a61a3bff7a7210f7b01997b80e796dd8dffe1a90
-const PROJECT_ID = '184cd61c05e0e2c7';
+const API_URL = 'https://www.geodesignhub.com/api/v1'; 
+// const API_URL = 'http://local.test:8000/api/v1'
 
 const useIGCSpecificBridgeExtensions = 1;
 let _allGDHSystems = null;
@@ -361,8 +360,6 @@ const arcGISOnlineSignInBtn = document.querySelector('#verify-ags-btn');
 
 const gdhApiTokenInput = document.getElementById("gdh-api-token");
 const gdhProjectIDInput = document.getElementById("gdh-project-id");
-API_TOKEN && (gdhApiTokenInput.value = API_TOKEN);
-PROJECT_ID && (gdhProjectIDInput.value = PROJECT_ID);
 
 function verifyCredentials() {
   // Save button text and set it to loading
@@ -578,10 +575,6 @@ function migrateGPLFeaturesAsDiagrams() {
     }
 
     var postJson = {"featuretype": geoJSONGeometryType, "description": gdhDiagramName, "geometry": gj_feature_collection};
-
-    if (index == 1) {
-      break;
-    }
 
     // JG - CHARLIE NEEDS GLOBALID //
     let gplOriginalObjectID = {'notes': null};

@@ -27,8 +27,8 @@ class DiagramReader extends EventTarget {
    */
   static CONFIG = {
     PORTAL_URL: "https://www.arcgis.com/",
-    //OAUTH_APP_ID: "ScgcXXJeR4NDyitK"  // HB //
-    OAUTH_APP_ID: "PZdAgiu187TroTCX"    // JG //
+    OAUTH_APP_ID: "L7TzVXFYcEkBe7qz"  // HB //
+    // OAUTH_APP_ID: "PZdAgiu187TroTCX"    // JG //
   };
 
   /**
@@ -168,8 +168,7 @@ class DiagramReader extends EventTarget {
                   query: {
                     resultOffset: startOffset,
                     where: queryFilter,
-                    outFields: '*',
-                    outSR: 3857,
+                    outFields: '*',                      
                     f: 'geojson'
                   }
                 }).then((response) => {
