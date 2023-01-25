@@ -114,7 +114,6 @@ import DiagramReader from './DiagramReader.js';
 const diagramReader = new DiagramReader();
 console.info("Diagram Reader created...");
 
-
 //
 //
 //
@@ -513,9 +512,10 @@ function getDesignJSONandMigrate() {
   var gdhDesignID = designTeamDesignCont.options[designTeamDesignCont.selectedIndex].id;
 
   gdhGetDesignESRIJSON(gdhProjectID, gdhApiToken, gdhDesignTeamID, gdhDesignID).then(designData => {
+    //
     // TODO: Migrate this design to GPL
-
-    console.info(designData)
+    //
+    console.info(designData);
 
     //
     // JG //
@@ -526,7 +526,9 @@ function getDesignJSONandMigrate() {
       designTeamID: gdhDesignTeamID,
       designID: gdhDesignID
     }).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
+
       this.innerHTML = 'Migration complete..';
+
     }).catch(error => {
       consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
       this.innerHTML = buttonText;
@@ -710,13 +712,14 @@ function arcGISOnlineSignIn() {
 
           // GROUP CLIMATE ACTIONS BY SYSTEM //
           const groupedActionsBySystem = actions.reduce((bySystem, action) => {
-            // GET CLIMATE ACTION DETAILS //
 
+            // GET CLIMATE ACTION DETAILS //
             const climateAction = _getClimateAction(action);
             // GET LIST OF CLIMATE ACTIONS BY SYSTEM //
             const actionsBySystem = bySystem.get(climateAction.systemCode) || [];
             // ADD ACTION TO LIST OF ACTIONS BY SYSTEM //
             actionsBySystem.push(climateAction.actionCode);
+
             return bySystem.set(climateAction.systemCode, actionsBySystem);
           }, new Map());
 
