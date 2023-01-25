@@ -503,10 +503,13 @@ function getDesignJSONandMigrate() {
   const gdhApiToken = document.getElementById("gdh-api-token").value;
   const gdhProjectID = document.getElementById("gdh-project-id").value;
   const designTeamCont = document.getElementById('geodesignhub-teams-list');
-  var gdhDesignTeamID = designTeamCont.options[designTeamCont.selectedIndex].id;
+  const gdhDesignTeamID = designTeamCont.options[designTeamCont.selectedIndex].id;
+  const gdhDesignTeamName = designTeamCont.options[designTeamCont.selectedIndex].innerText;
 
   const designTeamDesignCont = document.getElementById('geodesignhub-team-design-list');
-  var gdhDesignID = designTeamDesignCont.options[designTeamDesignCont.selectedIndex].id;
+  const gdhDesignID = designTeamDesignCont.options[designTeamDesignCont.selectedIndex].id;
+  const gdhDesignName = designTeamDesignCont.options[designTeamDesignCont.selectedIndex].innerText;
+
 
   gdhGetDesignESRIJSON(gdhProjectID, gdhApiToken, gdhDesignTeamID, gdhDesignID).then(designData => {
     //
@@ -520,8 +523,8 @@ function getDesignJSONandMigrate() {
     //
     diagramReader.createNewGeoPlannerScenario({
       designFeaturesAsEsriJSON: designData,
-      designTeamID: gdhDesignTeamID,
-      designID: gdhDesignID
+      designTeamName: gdhDesignTeamName,
+      designName: gdhDesignName
     }).then(({newPortalItem, scenarioID, scenarioFilter, addFeaturesOIDs}) => {
       console.info('New GeoPlanner Scenario Feature OIDs: ', addFeaturesOIDs);
 
