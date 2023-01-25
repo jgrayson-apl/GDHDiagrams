@@ -501,7 +501,7 @@ class DiagramReader extends EventTarget {
           const newPortalItem = new PortalItem({
             type: this.sourcePortalItem.type,
             url: this.sourcePortalItem.url,
-            title: `GDH Design - ${ designTeamName } - ${ designName }`,
+            title: `GDH Team: ${ designTeamName } Design: ${ designName }`,
             snippet: `A GDH negotiated design by team ${designTeamName}`,
             description: `${ this.sourcePortalItem.description || '' } - The GDH negotiated design ${ designName } from team ${ designTeamName }.`,
             accessInformation: this.sourcePortalItem.accessInformation || 'FOR USE BY IGC ONLY',

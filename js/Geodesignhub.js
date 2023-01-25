@@ -529,7 +529,7 @@ function getDesignJSONandMigrate() {
       console.info('New GeoPlanner Scenario Feature OIDs: ', addFeaturesOIDs);
 
       const mapUrl = `https://igcollab.maps.arcgis.com/apps/mapviewer/index.html?layers=${ scenarioID }`;
-      consoleElement.innerHTML = `New GPL Scenario: <a href="${mapUrl}" target="_blank">view</a>`
+      consoleElement.innerHTML = `New GPL Scenario: <a href="${mapUrl}" target="_blank">${newPortalItem.title}</a>`
 
       this.innerHTML = 'Migration complete..';
 
