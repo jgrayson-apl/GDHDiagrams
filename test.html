@@ -1,0 +1,173 @@
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no"/>
+    <title>Esri Query GeoJSON</title>
+    
+    <!-- Load Leaflet from CDN -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js" crossorigin=""></script>
+    
+    <!-- Load Esri Leaflet from CDN -->
+    <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+    <script src="https://unpkg.com/esri-leaflet-vector@4.0.0/dist/esri-leaflet-vector.js"></script>
+  
+    <link href="https://js.arcgis.com/4.25/@arcgis/core/assets/esri/themes/light/main.css" rel="stylesheet"/>
+    <script src="https://js.arcgis.com/4.25/"></script>
+    
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        color: #323232;
+      }
+    </style>
+  </head>
+  
+  <body>
+    <div id="map"></div>
+    
+    <script>
+      
+      // Source: https://github.com/chris48s/geojson-rewind
+      function rewind(gj, outer) {
+        var type = gj && gj.type, i;
+        
+        if (type === 'FeatureCollection') {
+          for (i = 0; i < gj.features.length; i++) rewind(gj.features[i], outer);
+          
+        } else if (type === 'GeometryCollection') {
+          for (i = 0; i < gj.geometries.length; i++) rewind(gj.geometries[i], outer);
+          
+        } else if (type === 'Feature') {
+          rewind(gj.geometry, outer);
+          
+        } else if (type === 'Polygon') {
+          rewindRings(gj.coordinates, outer);
+          
+        } else if (type === 'MultiPolygon') {
+          for (i = 0; i < gj.coordinates.length; i++) rewindRings(gj.coordinates[i], outer);
+        }
+        
+        return gj;
+      }
+      
+      function rewindRings(rings, outer) {
+        if (rings.length === 0) return;
+        
+        rewindRing(rings[0], outer);
+        for (var i = 1; i < rings.length; i++) {
+          rewindRing(rings[i], !outer);
+        }
+      }
+      
+      function rewindRing(ring, dir) {
+        var area = 0, err = 0;
+        for (var i = 0, len = ring.length, j = len - 1; i < len; j = i++) {
+          var k = (ring[i][0] - ring[j][0]) * (ring[j][1] + ring[i][1]);
+          var m = area + k;
+          err += Math.abs(area) >= Math.abs(k) ? area - m + k : k - m + area;
+          area = m;
+        }
+        if (area + err >= 0 !== !!dir) ring.reverse();
+      }
+      
+      const apiKey = "AAPKcdc730617e994c74a362333ff68099efgHTv9WBlE3qA-rTVVazkkMWu7mVd378Bjvc6ksuQyalBPcQM9qWVluvAW5rRynZq";
+      const map = L.map("map", {minZoom: 2}).setView([34.0, -118.0], 10);
+      L.esri.Vector.vectorBasemapLayer("ArcGIS:Topographic", {apiKey: apiKey}).addTo(map);
+      
+      /*
+       const parcels = L.esri.featureLayer({
+       url: "https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/LA_County_Parcels/FeatureServer/0",
+       simplifyFactor: 0.5,
+       precision: 4,
+       where: "(UseType = 'Government')"
+       }).addTo(map);
+       */
+      
+      require([
+        'esri/request',
+        'esri/identity/IdentityManager',
+        'esri/identity/OAuthInfo',
+        'esri/portal/Portal'
+      ], (esriRequest, esriId, OAuthInfo, Portal) => {
+        
+        // CONFIGURE OAUTH //
+        const oauthInfo = new OAuthInfo({
+          portalUrl: 'https://www.arcgis.com',
+          appId: 'PZdAgiu187TroTCX',
+          popup: true
+        });
+        esriId.registerOAuthInfos([oauthInfo]);
+  
+        const portal = new Portal({url:'https://www.arcgis.com'});
+        const portalSharingURL = `https://www.arcgis.com/sharing`;
+        
+        // CHECK THE SIGN-IN STATUS
+        esriId.checkSignInStatus(portalSharingURL).then(() => {
+          return esriId.getCredential(portalSharingURL);
+        }).catch(() => {
+          portal.authMode = 'immediate';
+        }).then(() => {
+          // LOAD PORTAL //
+          portal.load().then(() => {
+            console.info(`Signed in user: ${ portal.user?.username || 'none' }`);
+            
+            const queryUrl = "https://services9.arcgis.com/vBCQ4PWZkZBueexC/arcgis/rest/services/ForGeodesignIdbd92225f9c0645e0b1f6a50faa93ef9a/FeatureServer/0/query";
+            const queryFilter = "(Geodesign_ProjectID = 'bd92225f9c0645e0b1f6a50faa93ef9a') AND (Geodesign_ScenarioID = 'b6eb48adacb14a73b45ce92f4d1bb918') AND (ACTION_IDS IS NOT NULL)";
+            
+            //const queryUrl = 'https://services3.arcgis.com/GVgbJbqm8hXASVYi/arcgis/rest/services/LA_County_Parcels/FeatureServer/0/query';
+            //const queryFilter = '(UseType = "Government")';
+            
+            // GET GEOJSON FEATURES //
+            esriRequest(queryUrl, {
+              query: {
+                where: queryFilter,
+                outSR: 4326,
+                outFields: '*',
+                f: 'geojson'
+              }
+            }).then((response) => {
+              // GEOJSON FEATURES //
+              const {features} = response.data;
+              console.info("Feature Count: ", features.length);
+              
+              // SHOULD WE REWIND THE FEATURE GEOMETRIES? //
+              //const rewindFeatures = false;
+              
+              console.info("Feature Count: ", features.length);
+              features.forEach(feature => {
+                //console.info(feature.id, feature.geometry.coordinates.length)
+                
+                /*
+                 if(rewindFeatures) {
+                 const geom = feature.geometry;
+                 const rewound = rewind(geom, false);
+                 feature.geometry = rewound;
+                 }
+                 */
+                
+                L.geoJSON(feature, {
+                  style: function (geoJsonFeature) {
+                    return {color: '#ff0000'};
+                  }
+                }).addTo(map);
+              });
+              
+            }).catch(console.error);
+          }).catch(console.error);
+        }).catch(console.error);
+      });
+    
+    </script>
+  </body>

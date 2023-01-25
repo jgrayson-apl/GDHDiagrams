@@ -169,6 +169,7 @@ class DiagramReader extends EventTarget {
                     resultOffset: startOffset,
                     where: queryFilter,
                     outFields: '*',
+                    outSR: 4326,
                     f: 'geojson'
                   }
                 }).then((response) => {
