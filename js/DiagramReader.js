@@ -608,23 +608,65 @@ class DiagramReader extends EventTarget {
     //         - MISSING GLOBALID = NEW GDH DIAGRAM
     //         - ???
     //
-    const newFeaturesToAdd = candidateFeatures.filter(diagramFeature => {
+
+    //
+    // VALID CANDIDATE FEATURES //
+    //
+    const validDiagramFeatures = candidateFeatures.filter(diagramFeature => {
+      //
+      // HERE WE CAN ADD OTHER VALIDITY CHECKS TO DIAGRAMS //
+      //
       return (diagramFeature.geometry.rings != null);
-    }).map(diagramFeature => {
-
-      const globalID = diagramFeature.attributes.notes.globalid;
-
-      return {
-        geometry: diagramFeature.geometry,
-        attributes: {
-          Geodesign_ProjectID: projectID,
-          Geodesign_ScenarioID: scenarioID,
-          SOURCE_ID: globalID,
-          ACTION_IDS: diagramFeature.attributes.tag_codes,
-          name: diagramFeature.attributes.description
-        }
-      };
     });
+
+    //
+    // FEATURES TO BE ADDED TO NEW GPL SCENARIO //
+    //
+    const featuresByGlobalID = validDiagramFeatures.reduce((byGlobalID, diagramFeature) => {
+
+      const globalID = diagramFeature.attributes.notes.globalid || diagramFeature.attributes.notes;
+
+      let featureByGlobalID;
+
+      if (globalID?.length && byGlobalID.has(globalID)) {
+        featureByGlobalID = byGlobalID.get(globalID);
+        featureByGlobalID.attributes.ACTION_IDS += `|${ diagramFeature.attributes.tag_codes }`;
+      } else {
+        featureByGlobalID = {
+          geometry: diagramFeature.geometry,
+          attributes: {
+            Geodesign_ProjectID: projectID,
+            Geodesign_ScenarioID: scenarioID,
+            SOURCE_ID: globalID,
+            ACTION_IDS: diagramFeature.attributes.tag_codes,
+            name: diagramFeature.attributes.description
+          }
+        };
+      }
+
+      byGlobalID.set(globalID, featureByGlobalID);
+
+      return byGlobalID;
+    }, new Map());
+
+    //
+    // NEW GPL SCENARIO FEATURES TO ADD //
+    //
+    const newFeaturesToAdd = Array.from(featuresByGlobalID.values());
+
+    /*const newFeaturesToAdd = validDiagramFeatures.map(diagramFeature => {
+     const globalID = diagramFeature.attributes.notes.globalid;
+     return {
+     geometry: diagramFeature.geometry,
+     attributes: {
+     Geodesign_ProjectID: projectID,
+     Geodesign_ScenarioID: scenarioID,
+     SOURCE_ID: globalID,
+     ACTION_IDS: diagramFeature.attributes.tag_codes,
+     name: diagramFeature.attributes.description
+     }
+     };
+     });*/
     console.info("Aggregated new features to add: ", newFeaturesToAdd);
 
     return newFeaturesToAdd;
