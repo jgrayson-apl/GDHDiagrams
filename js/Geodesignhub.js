@@ -559,7 +559,6 @@ function migrateGPLFeaturesAsDiagrams() {
 
   for (let index = 0; index < source_diagrams_len; index++) {
     const current_diagram_feature = _diagramsGeoJSON[index];
-
     const gplSystem = current_diagram_feature.properties.system;
     const gdhTagCodes = current_diagram_feature.properties.tags;
     let gdhDiagramName = current_diagram_feature.properties.name;
@@ -584,9 +583,12 @@ function migrateGPLFeaturesAsDiagrams() {
     var postJson = {"featuretype": geoJSONGeometryType, "description": gdhDiagramName, "geometry": gj_feature_collection};
 
     // JG - CHARLIE NEEDS GLOBALID //
-    let gplOriginalObjectID = {'notes': null};
+    let gplNotes = {'notes':{'sourceid': 'ESRI-GPL', 'globalid':'ESRI-GPL'}};
     if (current_diagram_feature.properties.hasOwnProperty("GLOBALID")) {
-      gplOriginalObjectID['notes'] = current_diagram_feature.properties.GLOBALID;
+      gplNotes['globalid'] = current_diagram_feature.properties.GLOBALID;
+    }
+    if (current_diagram_feature.properties.hasOwnProperty("SOURCE_ID")) {
+      gplNotes['sourceid'] = current_diagram_feature.properties.SOURCE_ID;
     }
 
     if (gdhSystemID !== 0) {
@@ -611,14 +613,14 @@ function migrateGPLFeaturesAsDiagrams() {
           console.log("Submitted, waiting 250 ms..");
         }
         // Assign GPL Object ID 
-
-        if (gplOriginalObjectID['notes'] != null) {
-          gdhAssignDiagramNotes(gdhProjectID, gdhApiToken, diagramID, gplOriginalObjectID).then(notesUpdated => {
-            consoleElement.innerHTML = "Diagram notes updated..";
-          }).catch(error => consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`);
-          wait(100);
-          console.log("Waiting 100 ms..");
-        }
+        
+      
+        gdhAssignDiagramNotes(gdhProjectID, gdhApiToken, diagramID, gplOriginalObjectID).then(notesUpdated => {
+          consoleElement.innerHTML = "Diagram notes updated..";
+        }).catch(error => consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`);
+        wait(100);
+        console.log("Waiting 100 ms..");
+      
 
       }).catch(error => {
         consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`;
@@ -705,7 +707,7 @@ function arcGISOnlineSignIn() {
         // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
         // BASED ON THE SYSTEM. WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN SOURCE SCENARIO FEATURES
         //
-        _diagramsGeoJSON = sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {
+        _diagramsGeoJSON = sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {          
 
           // GET LIST OF ALL CLIMATE ACTIONS FOR EACH FEATURE //
           const actions = feature.properties.ACTION_IDS.split('|');
@@ -741,7 +743,6 @@ function arcGISOnlineSignIn() {
 
           return list;
         }, []);
-
       } else {
         console.warn('Diagram Reader - no features retrieved...');
       }
