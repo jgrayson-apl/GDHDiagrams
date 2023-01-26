@@ -587,9 +587,10 @@ function migrateGPLFeaturesAsDiagrams() {
     if (current_diagram_feature.properties.hasOwnProperty("GLOBALID")) {
       gplNotes['globalid'] = current_diagram_feature.properties.GLOBALID;
     }
-    if (current_diagram_feature.properties.hasOwnProperty("SOURCE_ID")) {
-      gplNotes['sourceid'] = current_diagram_feature.properties.SOURCE_ID;
-    }
+    // JG - SOURCE_ID WILL BE AN ATTRIBUTE WE POPULATE WITH THE GLOBALID VALUE BEFORE ADDING NEW FEATURES...
+    // if (current_diagram_feature.properties.hasOwnProperty("SOURCE_ID")) {
+    //   gplNotes['sourceid'] = current_diagram_feature.properties.SOURCE_ID;
+    // }
 
     if (gdhSystemID !== 0) {
 

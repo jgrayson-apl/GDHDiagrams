@@ -503,7 +503,7 @@ class DiagramReader extends EventTarget {
             type: this.sourcePortalItem.type,
             url: this.sourcePortalItem.url,
             title: `GDH design ${ designName } by team ${ designTeamName }`,
-            snippet: `GDH negotiated design by team ${designTeamName}`,
+            snippet: `GDH negotiated design by team ${ designTeamName }`,
             description: `The GDH negotiated design ${ designName } by team ${ designTeamName }.`,
             accessInformation: this.sourcePortalItem.accessInformation || 'FOR USE BY IGC ONLY',
             typeKeywords: this.sourcePortalItem.typeKeywords, // THE PROJECT ID WILL BE IN ONE OF THE TYPEKEYWORDS
@@ -595,24 +595,37 @@ class DiagramReader extends EventTarget {
   _updateScenarioCandidates(candidateFeatures, projectID, scenarioID) {
 
     //
-    // CREATE A FEATURE FOR EACH DIAGRAM //
+    // CREATE A FEATURE FOR EACH DIAGRAM
+    //
     // - NOTE: ONLY FEATURES WITH POLYGON GEOMETRIES ALLOWED CURRENTLY...
     //
-    return candidateFeatures.filter(diagramFeature => {
+    // - TODO: AGGREGATE MULTIPLE FEATURES WITH SAME GLOBALID...
+    //         - COMBINE ALL ACTION IDS PER GLOBAL ID
+    //         - GEOMETRY HAS CHANGES - HOW TO TRACK?
+    //         - MISSING GLOBALID?
+    //         - DIFFERENT NAMES?
+    //         - ???
+    //
+    const newFeaturesToAdd = candidateFeatures.filter(diagramFeature => {
       return (diagramFeature.geometry.rings != null);
     }).map(diagramFeature => {
+
+      const globalID = diagramFeature.attributes.notes.globalid;
+
       return {
         geometry: diagramFeature.geometry,
         attributes: {
           Geodesign_ProjectID: projectID,
           Geodesign_ScenarioID: scenarioID,
-          SOURCE_ID: diagramFeature.attributes.notes,
+          SOURCE_ID: globalID,
           ACTION_IDS: diagramFeature.attributes.tag_codes,
           name: diagramFeature.attributes.description
         }
       };
     });
+    console.info("Aggregated new features to add: ", newFeaturesToAdd);
 
+    return newFeaturesToAdd;
   }
 
   /**
