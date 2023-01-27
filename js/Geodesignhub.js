@@ -616,7 +616,7 @@ function migrateGPLFeaturesAsDiagrams() {
         // Assign GPL Object ID 
         
       
-        gdhAssignDiagramNotes(gdhProjectID, gdhApiToken, diagramID, gplOriginalObjectID).then(notesUpdated => {
+        gdhAssignDiagramNotes(gdhProjectID, gdhApiToken, diagramID, gplNotes).then(notesUpdated => {
           consoleElement.innerHTML = "Diagram notes updated..";
         }).catch(error => consoleElement.innerHTML = `<div>${ error }</div>${ consoleElement.innerHTML }`);
         wait(100);

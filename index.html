@@ -1,23 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0 maximum-scale=1.0"/>
-    <link rel="icon" href="./assets/favicon.ico" sizes="32x32" type="image/vnd.microsoft.icon">
-    <title>Geodesign Hub Diagrams</title>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1.0 maximum-scale=1.0" />
+  <link rel="icon" href="./assets/favicon.ico" sizes="32x32" type="image/vnd.microsoft.icon">
+  <title>Geodesign Hub Diagrams</title>
+
+  <!-- ArcGIS API for JavaScript-->
+  <link href="https://js.arcgis.com/4.25/@arcgis/core/assets/esri/themes/light/main.css" rel="stylesheet" />
+  <script src="https://js.arcgis.com/4.25/"></script>
+
+  <!-- APPLICATION -->
+
+  <link rel="stylesheet" type="text/css" href="css/simple.css">
+  <link rel="stylesheet" type="text/css" href="css/DiagramReader.css">
+  <script type="module" src="js/Geodesignhub.js"></script>
+
+</head>
+
+<body>
+
+  <header>
+    <nav>
+
+      <a href="https://www.esri.com" class="current"><img src="logos/esri-logo.png">
+
+      <a href="https://www.geodesignhub.com"><img src="logos/geodesignhub-logo.jpeg"></a>
+
+      <a href="https://github.com/geodesignhub/GDHDiagrams"><img src="logos/github-logo.jpeg"></a>
+
+    </nav>
+    <br>
+    <h1>ESRI &harr; Geodesignhub Bridge</h1>
+    <p>A data exchange to enable bi-directional data transfer between Geodesignhub projects and ESRI ArcGIS / Geoplanner systems.</p>
+  </header>
+  <main>
     
-    <!-- ArcGIS API for JavaScript-->
-    <link href="https://js.arcgis.com/4.25/@arcgis/core/assets/esri/themes/light/main.css" rel="stylesheet"/>
-    <script src="https://js.arcgis.com/4.25/"></script>
+    <h4>Who is this for?</h4>
+    <p>This bridge is meant for Geodesignhub project administrators and who want to migrate data between a specially configrured Geodesignhub projects into ArcGIS (and vice versa). Some actions are irreversible so please review the workflow documentation before proceeding, you can also contact via <a href="https://community.geodesignhub.com">Geodesignhub Community</a> portal in case of questions.</p>
+    <h4>Before you begin</h4>
+    <p>To use this bridge, you will need an account in <a href="https://www.arcgis.com/index.html">ArcGIS online</a> and be a part of an ArcGIS Organization. On the <a href="https://www.geodesignhub.com">Geodesignhub</a> side, you must be a member of a Geodesignhub project. You will also need your project ID and API token from Geodesignhub, for more information on how to get your API Token and Project ID see <a
+      href="https://community.geodesignhub.com/t/where-is-my-project-id/1275">support article</a>.</p>
+    <h4>Step by step instruction</h4>
+    <h5>Worflow 1: Geoplanner / ArcGIS Organization -> Geodesignhub </h5>
+    <p><strong>Estimated time: 3 min.</strong></p>
+    <p>Follow these instructions step by step to do a migration of Geoplanner data into Geodesignhub as diagrams. </p>
+    <ol>
+      <li>Authenticate yourself via OAuth to ESRI Systems, this should populate the GeoPlanner groups</li>
+      <li>Find GeoPlanner Project Groups<ol>
+          <li>Select one Group </li>
+        </ol>
+      </li>
+      <li>Find GeoPlanner Scenario Portal Items in selected Group<ol>
+          <li>Select one Portal Item </li>
+        </ol>
+      </li>
+      <li>Query GeoPlanner Scenario features as GeoJSON</li>
+      <li>Input your Geodesignhub Project ID and API Token and press "Verify Project", this will verify that the target project in Geodesignhub is correctly configured.</li>
+      <li>After verification checks have passed, you will see a "Migrate Diagrams" button this one time process will migrate the selected data from Geoplanner into Geodesignhub project as diagrams.</li> 
+    </ol>
+
+    <h5>Worflow 2: Negotiated Design from Geodesignhub -> Geoplanner / ArcGIS Scenario</h5>
+    <p><strong>Estimated time: 1 min.</strong></p>
+    <p>Follow these instructions step by step to do a migration of Geodesignhub diagrams as new Geoplanner scenario.</p>
     
-    <!-- APPLICATION -->
-    <link rel="stylesheet" type="text/css" href="css/DiagramReader.css">
-    <script type="module" src="js/Geodesignhub.js"></script>
-    
-  </head>
-  <body>
-    
-    
+    <ol>
+      <li>Select the design team from Geodesignhub from the dropdown</li>
+      <li>Select the specific design that you want to migrate to Geoplanner</li>
+      <li>Add GDH Design diagrams/features as new features to the Scenario Portal Item
+            <ul>
+              <li>Confirm number of added features</li>
+            </ul>
+          </li>
+        </ol>
+      </li>
+    </ol>
+
+
+   
+  </main>
+  <br>
+  <br>
     <div class="pane">
       <div class="pane-title">ArcGIS Online</div>
       <button class="action-btn" id="verify-ags-btn">Sign In</button>
@@ -25,7 +89,7 @@
         <span class="pane-label">Singed-in User:</span> <span id="sign-in-user-label"></span>
       </div>
     </div>
-    
+
     <div class="pane">
       <div>
         <span class="pane-label">GeoPlanner Online Groups</span>
@@ -36,7 +100,7 @@
       <select id="geoplanner-groups-list"></select>
       <button id="geoplanner-group-btn" class="action-btn">select</button>
     </div>
-    
+
     <div class="pane">
       <div>
         <span class="pane-label">GeoPlanner Scenario Portal Items</span>
@@ -48,7 +112,7 @@
       <button id="geoplanner-items-btn" class="action-btn">select</button>
       <button id="geoplanner-delete-btn" class="action-btn" hidden>delete</button>
     </div>
-    
+
     <div class="pane" hidden>
       <div>
         <span class="pane-label">GeoPlanner Source Portal Item</span>
@@ -56,7 +120,7 @@
       <div>Scenario Filter:</div>
       <div id="geoplanner-source-item-details" class="pane-section"></div>
     </div>
-    
+
     <div class="pane" hidden>
       <span class="toggle"></span>
       <div>
@@ -64,7 +128,7 @@
       </div>
       <div id="gdh-features-list" class="pane-section"></div>
     </div>
-    
+
     <div class="pane">
       <span class="toggle"></span>
       <div>
@@ -72,7 +136,7 @@
       </div>
       <div id="gdh-diagrams-list" class="pane-section"></div>
     </div>
-    
+
     <div class="pane" hidden>
       <span class="toggle"></span>
       <div>
@@ -81,7 +145,7 @@
       <button id="get-random-candidates-btn" class="action-btn">Get Random Candidates</button>
       <div id="gdh-candidates-list" class="pane-section"></div>
     </div>
-  
+
     <div id="geodesignhub_migration_cont" class="pane" hidden>
       <div class="pane-title">Migrate Diagrams to Geodesignhub</div>
       <br> <label for="gdh-project-id">Project ID</label>
@@ -94,28 +158,28 @@
       <button class="hide action-btn" id="migrate-diagrams-gdh-btn">Migrate Diagrams</button>
       <pre id="gdh-console"></pre>
     </div>
-    
-  
+
+
     <div id="geodesignhub_to_gpl_migration_design_team_selection_cont" class="pane" hidden>
       <div class="pane-title">Migrate Designs from Geodesignhub: Select Design Team</div>
-      
+
       <select id="geodesignhub-teams-list"></select>
       <button id="geodesignhub-team-selection-btn" class="action-btn">select</button>
-      
+
     </div>
-    
-  
+
+
     <div id="geodesignhub_to_gpl_migration_cont" class="pane" hidden>
       <div class="pane-title">Migrate Designs from Geodesignhub: Select Design</div>
-      
-      
+
+
       <select id="geodesignhub-team-design-list"></select>
-      
+
       <button id="geodesignhub-migrate-selected-gdh-desig-btn" class="action-btn">Migrate Design to GeoPlanner</button>
       <pre id="gdh-design-migration-console"></pre>
     </div>
-    
-  
-  
-  </body>
+
+
+</body>
+
 </html>
