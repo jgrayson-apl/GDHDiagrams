@@ -688,7 +688,10 @@ function arcGISOnlineSignIn() {
         // ONCE WE HAVE ALL THE SOURCE SCENARIO FEATURES WE'LL HAVE ORGANIZE THE THEM INTO GDH DIAGRAMS
         // BASED ON THE SYSTEM. WHICH WILL LIKELY RESULT IN MORE DIAGRAMS THAN SOURCE SCENARIO FEATURES
         //
-        _diagramsGeoJSON = sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {
+        // IN THIS WORKFLOW, FOR EACH INPUT FEATURE, WE END UP WITH A DIAGRAM WITH MULTIPLE ACTIONS
+        // PER SYSTEM. IF NOT ACTIONS EXIST FOR A SYSTEM THEN THERE IS NO DIAGRAM FOR THAT SYSTEM.
+        //
+        _diagramsGeoJSON = sourceScenarioFeaturesGeoJSON.reduce((list, feature) => {          
 
           // GET LIST OF ALL CLIMATE ACTIONS FOR EACH FEATURE //
           const actions = feature.properties.ACTION_IDS.split('|');
